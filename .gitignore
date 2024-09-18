@@ -137,7 +137,7 @@ cython_debug/
 private/
 
 uploads/
-
+config.py
 *.parquet
 *.db
 *.ipynb_checkpoints
