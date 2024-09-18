@@ -1,0 +1,541 @@
+{% extends "layouts/base_secondary.html" %}
+
+
+{% block head %}
+{% endblock %}
+
+
+{% block leftmenu %}
+
+
+<input type="text" id="databaseSearchInput" class="menu-search-input" placeholder="Search databases..." onkeyup="filterDatabases()">
+
+{% endblock %}
+
+{% block leftcontents %}
+<div id="databases-container">
+    {% for database in databases %}
+    <div class="database-item">
+        <button class="database-dropdown-button" data-database-id="{{ database.id }}" data-username="{{ current_user.username }}" data-database-name="{{ database.database_name }}">
+            <div class="button-left-content">
+                <i class="fas fa-angle-right arrow-icon"></i>
+                <i class="custom-icon fa-solid fa-database"></i>
+                <span class="button-text">{{ database.database_name }}</span>
+            </div>
+            <div class="button-ellipsis">
+                <i class="fa-solid fa-ellipsis"></i>
+            </div>
+        </button>
+        <div class="schema-container" style="display: none;"></div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+
+{% block rightcontents %}
+<div class="right-section__header">
+    <div class="right-section__header-left">
+        <h2>Databases</h2>
+    </div>
+    <div class="right-section__header-right">
+        <button id="creation-btn" data-toggle="modal" data-target="#createDatabaseModal">+ Database</button>
+    </div>
+</div>
+<div class="right-section__contents">
+    {% if databases|length > 0 %}
+
+
+
+
+    <div class="right-section__contents-table-header">
+        <h2>{{ databases|length }} Databases</h2>
+        <button class="custom-button-head">
+            <i class="custom-icon left-icon fa-solid fa-database"></i>
+            <span class="button-name">Name <i class="sort-by fa-solid fa-arrow-down"></i></span>
+            <span class="text-1">Created <i class="sort-by fa-solid fa-arrow-down"></i></span>
+            <span class="text-2">Comment</span>
+        </button>
+    </div>
+
+    {% for database in databases %} 
+    <button class="custom-button" data-database-id="{{ database.id }}">
+        <i class="left-icon fas fa-star"></i>
+        <span class="button-name">{{ database.database_name }}</span>
+        <span class="text-1">{{ database.date_created.strftime('%Y-%m-%d') }}</span>
+        <span class="text-2">{{ database.database_description }}</span>
+        <i class="right-icon fa-solid fa-ellipsis"></i>
+    </button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="modal fade" id="createDatabaseModal" tabindex="-1" role="dialog" aria-labelledby="createDatabaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createDatabaseModalLabel">Create New Database</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{form.database_name.label(class="form-control-label") }}
+                            {% if form.database_name.errors %}
+                            {{form.database_name(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.database_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                                {{form.database_name(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{form.database_description.label(class="form-control-label") }}
+                            {% if form.database_description.errors %}
+                            {{form.database_description(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.database_description.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                                {{form.database_description(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{form.default_schema.label(class="form-control-label") }}
+                            {% if form.default_schema.errors %}
+                            {{form.default_schema(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.default_schema.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                                {{form.default_schema(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{form.schema_description.label(class="form-control-label") }}
+                            {% if form.schema_description.errors %}
+                            {{form.schema_description(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.schema_description.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                                {{form.schema_description(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group position-right">
+                            {{ form.submit(class="modal-submit-button") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+
+
+
+    {% else %}
+    <h1 class="mb-3">No databases. Create one below!</h1>
+    <form method="POST" action="" novalidate>
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">{{ legend }}</legend> <!-- legend variable-->
+            <div class="form-group">
+                {{form.database_name.label(class="form-control-label") }}
+                {% if form.database_name.errors %}
+                {{form.database_name(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.database_name.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    {{form.database_name(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{form.database_description.label(class="form-control-label") }}
+                {% if form.database_description.errors %}
+                {{form.database_description(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.database_description.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    {{form.database_description(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{form.default_schema.label(class="form-control-label") }}
+                {% if form.default_schema.errors %}
+                {{form.default_schema(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.default_schema.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    {{form.default_schema(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{form.schema_description.label(class="form-control-label") }}
+                {% if form.schema_description.errors %}
+                {{form.schema_description(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.schema_description.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    {{form.schema_description(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="modal-submit-button") }}
+        </div>
+    </form>
+    {% endif %}
+</div>
+<div class="right-section__contents-table-footer"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/filetree.js') }}"></script>
+
+
+
+
+<script>
+    function filterDatabases() {
+    // Get the value from the search input field
+    let input = document.getElementById('databaseSearchInput');
+    let filter = input.value.toLowerCase();
+
+
+    // Get all the database items
+    let databaseItems = document.querySelectorAll('.database-dropdown-button');
+    
+    // Loop through the databases and hide/show based on the filter
+    databaseItems.forEach(function(item) {
+        let dbName = item.getAttribute('data-database-name'); // Get the database name (already lowercased)
+        let dbNameLower = dbName.toLowerCase();
+        
+        // If the database name contains the search term, display it, otherwise hide it
+        if (dbNameLower.includes(filter)) {
+            item.style.display = '';
+            item.nextElementSibling.style.display = '';
+        } else {
+            item.style.display = 'none';
+            item.nextElementSibling.style.display = 'none';
+        }
+
+
+    });
+}
+
+
+
+
+// Get all the sortable columns
+const sortableColumns = document.querySelectorAll('.custom-button-head .button-name, .custom-button-head .text-1');
+
+// Get all the database buttons
+const databaseButtons = Array.from(document.querySelectorAll('.custom-button'));
+
+// Keep track of the current sort column and order
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+
+// Function to toggle sort order and update arrow icon
+function toggleSortOrder(column) {
+    const arrow = column.querySelector('.sort-by');
+    if (column === currentSortColumn) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        arrow.classList.toggle('fa-arrow-down', currentSortOrder === 'asc');
+        arrow.classList.toggle('fa-arrow-up', currentSortOrder === 'desc');
+    } else {
+        if (currentSortColumn) {
+            currentSortColumn.querySelector('.sort-by').style.visibility = 'hidden';
+        }
+        currentSortColumn = column;
+        currentSortOrder = 'asc';
+        arrow.classList.remove('fa-arrow-up');
+        arrow.classList.add('fa-arrow-down');
+    }
+    arrow.style.visibility = 'visible';
+}
+
+// Function to sort database buttons
+function sortDatabases(column) {
+    const index = Array.from(column.parentNode.children).indexOf(column);
+    const isDate = index === 2; // Check if sorting by date
+    const isName = index === 1; // Check if sorting by name
+
+    databaseButtons.sort((a, b) => {
+        let aValue = a.children[index].textContent.trim();
+        let bValue = b.children[index].textContent.trim();
+
+        if (isDate) {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+        } else if (isName) {
+            // Case-insensitive sorting for names
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+            
+            // Natural sort order for alphanumeric strings
+            return currentSortOrder === 'asc' 
+                ? aValue.localeCompare(bValue, undefined, {numeric: true, sensitivity: 'base'})
+                : bValue.localeCompare(aValue, undefined, {numeric: true, sensitivity: 'base'});
+        }
+
+        if (aValue > bValue) return currentSortOrder === 'asc' ? -1 : 1;
+        if (aValue < bValue) return currentSortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Reorder the buttons in the DOM
+    const container = document.querySelector('.right-section__contents-table-header').parentNode;
+    databaseButtons.forEach(button => container.appendChild(button));
+}
+
+// Add click event listeners to sortable columns
+sortableColumns.forEach(column => {
+    column.addEventListener('click', () => {
+        toggleSortOrder(column);
+        sortDatabases(column);
+    });
+});
+
+
+
+
+
+/*
+// Get all the sortable columns
+const sortableColumns = document.querySelectorAll('.custom-button-head .button-name, .custom-button-head .text-1');
+console.log('Sortable columns:', sortableColumns);
+
+// Get all the database buttons
+const databaseButtons = Array.from(document.querySelectorAll('.custom-button'));
+console.log('Database buttons:', databaseButtons);
+
+// Keep track of the current sort column and order
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+
+// Function to toggle sort order and update arrow icon
+function toggleSortOrder(column) {
+    console.log('Toggle sort order called for column:', column);
+    const arrow = column.querySelector('.sort-by');
+    console.log('Arrow element:', arrow);
+    if (column === currentSortColumn) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        console.log('Toggling current sort order to:', currentSortOrder);
+        arrow.classList.toggle('fa-arrow-down', currentSortOrder === 'asc');
+        arrow.classList.toggle('fa-arrow-up', currentSortOrder === 'desc');
+    } else {
+        if (currentSortColumn) {
+            console.log('Hiding arrow for previous sort column');
+            currentSortColumn.querySelector('.sort-by').style.visibility = 'hidden';
+        }
+        currentSortColumn = column;
+        currentSortOrder = 'asc';
+        console.log('New sort column set, order reset to asc');
+        arrow.classList.remove('fa-arrow-up');
+        arrow.classList.add('fa-arrow-down');
+    }
+    arrow.style.visibility = 'visible';
+    console.log('Arrow visibility set to visible');
+}
+
+// Function to sort database buttons
+function sortDatabases(column) {
+    console.log('Sort databases called for column:', column);
+    const index = Array.from(column.parentNode.children).indexOf(column);
+    console.log('Column index:', index);
+    const isDate = index === 2;
+    const isName = index === 1;
+    console.log('Is date column:', isDate, 'Is name column:', isName);
+
+    databaseButtons.sort((a, b) => {
+        let aValue = a.children[index].textContent.trim();
+        let bValue = b.children[index].textContent.trim();
+        console.log('Comparing values:', aValue, bValue);
+
+        if (isDate) {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+            console.log('Date values:', aValue, bValue);
+        } else if (isName) {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+            console.log('Lowercase name values:', aValue, bValue);
+            
+            let result = currentSortOrder === 'asc' 
+                ? aValue.localeCompare(bValue, undefined, {numeric: true, sensitivity: 'base'})
+                : bValue.localeCompare(aValue, undefined, {numeric: true, sensitivity: 'base'});
+            console.log('Name comparison result:', result);
+            return result;
+        }
+
+        let result;
+        if (aValue < bValue) result = currentSortOrder === 'asc' ? -1 : 1;
+        else if (aValue > bValue) result = currentSortOrder === 'asc' ? 1 : -1;
+        else result = 0;
+        console.log('Comparison result:', result);
+        return result;
+    });
+
+    console.log('Sorted database buttons:', databaseButtons);
+
+    // Reorder the buttons in the DOM
+    const container = document.querySelector('.right-section__contents-table-header').parentNode;
+    databaseButtons.forEach(button => container.appendChild(button));
+    console.log('Buttons reordered in DOM');
+}
+
+// Add click event listeners to sortable columns
+sortableColumns.forEach(column => {
+    column.addEventListener('click', () => {
+        console.log('Column clicked:', column);
+        toggleSortOrder(column);
+        sortDatabases(column);
+    });
+});
+
+
+*/
+
+
+
+
+
+
+
+/*
+
+
+
+
+// Get all the sortable columns
+const sortableColumns = document.querySelectorAll('.custom-button-head .button-name, .custom-button-head .text-1');
+
+// Get all the database buttons
+const databaseButtons = Array.from(document.querySelectorAll('.custom-button'));
+
+// Keep track of the current sort column and order
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+
+// Function to toggle sort order and update arrow icon
+function toggleSortOrder(column) {
+    const arrow = column.querySelector('.sort-by');
+    if (column === currentSortColumn) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        arrow.classList.toggle('fa-arrow-down', currentSortOrder === 'asc');
+        arrow.classList.toggle('fa-arrow-up', currentSortOrder === 'desc');
+    } else {
+        if (currentSortColumn) {
+            currentSortColumn.querySelector('.sort-by').style.visibility = 'hidden';
+        }
+        currentSortColumn = column;
+        currentSortOrder = 'asc';
+        arrow.classList.remove('fa-arrow-up');
+        arrow.classList.add('fa-arrow-down');
+    }
+    arrow.style.visibility = 'visible';
+}
+
+// Function to sort database buttons
+function sortDatabases(column) {
+    const index = Array.from(column.parentNode.children).indexOf(column);
+    const isDate = index === 2; // Check if sorting by date
+
+    databaseButtons.sort((a, b) => {
+        let aValue = a.children[index].textContent;
+        let bValue = b.children[index].textContent;
+
+        if (isDate) {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+        }
+
+        if (aValue < bValue) return currentSortOrder === 'asc' ? -1 : 1;
+        if (aValue > bValue) return currentSortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Reorder the buttons in the DOM
+    const container = document.querySelector('.right-section__contents-table-header').parentNode;
+    databaseButtons.forEach(button => container.appendChild(button));
+}
+
+// Add click event listeners to sortable columns
+sortableColumns.forEach(column => {
+    column.addEventListener('click', () => {
+        toggleSortOrder(column);
+        sortDatabases(column);
+    });
+});
+
+
+
+*/
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const username = document.body.dataset.username;
+    const buttons = document.querySelectorAll('.custom-button')
+    buttons.forEach(button => {
+
+        button.addEventListener('click', function(){
+
+            const databaseId = this.dataset.databaseId;
+             window.location.href = `/${username}/databases/${databaseId}`
+        })
+    })
+})
+
+
+
+
+
+
+</script>
+{% endblock %}

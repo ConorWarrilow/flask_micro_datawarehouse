@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block head %}
+    <style>
+        .larger {
+            height:500px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Upload CSV</h2>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <!-- select files -->
+            <div class="form-group">
+                {{ form.files.label(class="form-control-label") }}
+                {% if form.files.errors %}
+                    {{ form.files(class="form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.files.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.files(class="form-control") }}
+                {% endif %}
+            </div>
+            <!-- select database -->
+            <div class="form-group">
+                {{ form.database.label(class="form-control-label") }}
+                {% if form.database.errors %}
+                {{ form.database(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.database.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.database(class="form-control", id="database-select") }}
+                {% endif %}
+            </div>
+            <!-- select schema -->
+            <div class="form-group hidden" id="schema-group">
+                {{ form.schema.label(class="form-control-label") }}
+                {% if form.schema.errors %}
+                {{ form.schema(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.schema.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.schema(class="form-control", id="schema-select") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var databaseSelect = document.getElementById('database-select');
+            var schemaSelect = document.getElementById('schema-select');
+            var schemaGroup = document.getElementById('schema-group');
+
+            databaseSelect.addEventListener('change', function() {
+                var databaseId = this.value;
+                
+                // Clear current options
+                schemaSelect.innerHTML = '<option value="">Select Schema</option>';
+
+                if (databaseId) {
+                    fetch(`/schemas/${databaseId}`)
+                        .then(response => response.json())
+                        .then(schemas => {
+                            schemas.forEach(([id, name]) => {
+                                var option = document.createElement('option');
+                                option.value = id;
+                                option.textContent = name;
+                                schemaSelect.appendChild(option);
+                            });
+                            schemaGroup.classList.remove('hidden');
+                        })
+                        .catch(error => {
+                            console.error('Error fetching schemas:', error);
+                        });
+                } else {
+                    schemaGroup.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+{% endblock content %}

@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/solarized.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/duotone-light.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <!-- SQL Mode -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    <!-- Show-Hint Addon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <!-- SQL Hint Addon -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/sql-hint.min.js"></script>
+    {% for post in posts.items %} <!-- included .items since its a pagination object after adding pagination -->
+        <article class="media content-section">
+          <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+          <div class="media-body">
+            <div class="article-metadata">
+              <a class="mr-2" href="{{ url_for('users.user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
+              <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+            </div>
+            <h2><a class="article-title" href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a></h2>
+            <p class="article-content">{{ post.content }}</p>
+          </div>
+        </article>
+    {% endfor %}
+    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if page_num %}
+            {% if posts.page == page_num %}
+                <a class="btn btn-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+            {% else %}
+                <a class="btn btn-outline-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+            {% endif %}
+        {% else %}
+        ...
+        {% endif %}
+    {% endfor %}
+    <br>
+    <br>
+
+
+    <textarea id="sql-editor" placeholder="Write your SQL query here..."></textarea>
+
+    <script>
+      // Define your database schema
+      var sqlSchema = {
+          "users": ["id", "name", "email", "created_at"],
+          "orders": ["order_id", "user_id", "product_id", "quantity", "price"],
+          "products": ["product_id", "product_name", "price", "stock"],
+          "categories": ["category_id", "category_name"]
+      };
+  
+      // Initialize CodeMirror with SQL mode and autocomplete functionality
+      var editor = CodeMirror.fromTextArea(document.getElementById("sql-editor"), {
+          mode: "text/x-sql",
+          theme: "default",
+          lineNumbers: true,
+          extraKeys: {"Ctrl": "autocomplete"},
+          hintOptions: {
+              hint: customSqlHint,
+              tables: sqlSchema
+          }
+      });
+  
+      // Custom hint function
+      function customSqlHint(cm) {
+          var cur = cm.getCursor();
+          var token = cm.getTokenAt(cur);
+          var start = token.start;
+          var end = cur.ch;
+          var line = cur.line;
+          var currentWord = token.string.slice(0, cur.ch - token.start);
+  
+          // Get the entire line up to the cursor
+          var lineText = cm.getLine(line).slice(0, cur.ch).toUpperCase();
+  
+          // Simple context detection
+          var context = "";
+          if (lineText.match(/\bFROM\b\s+\w+$/)) {
+              context = "table";
+          } else if (lineText.match(/\bSELECT\b\s+[\w.,\s]*$/) || lineText.match(/\bWHERE\b\s+\w*$/)) {
+              context = "column";
+          }
+  
+          var sqlKeywords = ["SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "JOIN", "INNER", "LEFT", "RIGHT", "ON", "AS", "GROUP BY", "ORDER BY", "LIMIT", "OFFSET"];
+          var list = [];
+  
+          if (context === "table") {
+              list = Object.keys(sqlSchema);
+          } else if (context === "column") {
+              // Attempt to find the last table mentioned in FROM clause
+              var fromMatch = lineText.match(/\bFROM\b\s+(\w+)/);
+              if (fromMatch && fromMatch[1] && sqlSchema[fromMatch[1].toLowerCase()]) {
+                  list = sqlSchema[fromMatch[1].toLowerCase()];
+              }
+          } else {
+              list = sqlKeywords.concat(Object.keys(sqlSchema));
+          }
+  
+          // Filter suggestions based on currentWord
+          var regex = new RegExp("^" + currentWord, "i");
+          var suggestions = list.filter(function(item) {
+              return regex.test(item);
+          });
+  
+          return {
+              list: suggestions,
+              from: CodeMirror.Pos(line, start),
+              to: CodeMirror.Pos(line, end)
+          };
+      }
+  
+      // Optional: Trigger autocomplete based on certain patterns
+      editor.on("inputRead", function(cm, change) {
+          // Example: Trigger autocomplete after typing SELECT, FROM, WHERE
+          if (/SELECT|FROM|WHERE/i.test(change.text.join(""))) {
+              cm.showHint({hint: customSqlHint, completeSingle: false});
+          }
+      });
+  </script>
+
+{% endblock content %}

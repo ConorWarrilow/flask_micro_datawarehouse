@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST" action="" novalidate>
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+
+                <!-- Schema Name Field -->
+                <div class="form-group">
+                    {{ form.schema_name.label(class="form-control-label") }}
+                    {% if form.schema_name.errors %}
+                    {{ form.schema_name(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.schema_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                        {{ form.schema_name(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+
+                <!-- Schema Description Field -->
+                <div class="form-group">
+                    {{ form.schema_description.label(class="form-control-label") }}
+                    {% if form.schema_description.errors %}
+                    {{ form.schema_description(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.schema_description.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                        {{ form.schema_description(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+
+                <!-- Database Selection -->
+                <div class="form-group">
+                    {{ form.database.label(class="form-control-label") }}
+                    {{ form.database(class="form-control") }}
+                </div>
+            </fieldset>
+
+            <!-- Submit Button -->
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+{% endblock content %}

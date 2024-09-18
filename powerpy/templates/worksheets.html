@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block content %}
+
+        {% for folder in folders %} 
+            <article class="media content-section">
+                <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}">
+                <div class="media-body">
+                    <div class="article-metadata">
+                        <p>folder</p>
+                        <small class="text-muted">{{ folder.date_created.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <div>
+                        <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('databases.create_schema_for_db', database_id=folder.id, username=current_user.username) }}" method="UPDATE">edit</a>
+                        <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                      </div>
+
+
+                      
+                    <h2><a class="article-title" href="{{ url_for('users.view_folder', username=current_user.username, folder_id=folder.id) }}">{{ folder.name }}</a></h2>
+
+                    <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteFolderModal">Delete</button>
+
+                </div>
+            </article>
+            <!-- delete folder modal-->
+            <div class="modal fade" id="deleteFolderModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteModalLabel">Delete Folder?</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Are you sure you want to delete {{ folder.name}} from your database? This action cannot be undone and all data will be lost.</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <form action="{{ url_for('users.delete_folder', folder_id=folder.id, username=current_user.username) }}" method="POST">
+                        <input class="btn btn-danger" type="submit" value="Delete">
+                      </form>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        {% endfor %}
+
+
+
+        {% for worksheet in worksheets %} 
+            <article class="media content-section" style="background-color: rgb(197, 197, 197);">
+                <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}">
+                <div class="media-body">
+                    <div class="article-metadata">
+                        <p>worksheet</p>
+                        <small class="text-muted">{{ worksheet.date_created.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <div>
+                        <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('databases.create_schema_for_db', database_id=worksheet.id, username=current_user.username) }}" method="UPDATE">update</a>
+                        <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                      </div>
+                    <h2><a class="article-title" href="{{ url_for('users.query', username=current_user.username, code=worksheet.code) }}">{{ worksheet.name }}</a></h2>
+                    <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteWorksheetModal">Delete</button>
+
+                </div>
+            </article>
+            <!-- delete worksheet modal-->
+            <div class="modal fade" id="deleteWorksheetModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteModalLabel">Delete Worksheet?</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Are you sure you want to delete {{ worksheet.name}} from your database? This action cannot be undone and all data will be lost.</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <form action="{{ url_for('users.delete_worksheet', worksheet_id=worksheet.id, username=current_user.username) }}" method="POST">
+                        <input class="btn btn-danger" type="submit" value="Delete">
+                      </form>
+                    </div>
+                  </div>
+                </div>
+            </div>
+        {% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+    

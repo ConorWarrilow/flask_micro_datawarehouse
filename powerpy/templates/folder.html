@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>{{ folder.name }} ({{ child_folders|length }} child folders, {{ worksheets|length }} worksheets)</h1>
+    <h1>parent_folder: {{ folder.parent_id }}</h1>
+    {% if folder.parent_id %}
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
+    {% else %}
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_folder', username=current_user.username, folder_id=folder.id) }}">new folder</a>
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
+    {% endif %}
+    <!-- Display child folders -->
+    <h2>Folders:</h2>
+    {% if child_folders %}
+        <ul>
+            {% for child in child_folders %}
+                <li>
+                    <a href="{{ url_for('users.view_folder', username=username, folder_id=child.id) }}">
+                        {{ child.name }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No subfolders in this folder.</p>
+    {% endif %}
+
+    <!-- Display worksheets -->
+    <h2>Worksheets:</h2>
+    {% if worksheets %}
+        <ul>
+            {% for worksheet in worksheets %}
+                <li>
+                    <a href="{{ url_for('users.query', username=username, code=worksheet.code) }}">
+                        {{ worksheet.name }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No worksheets in this folder.</p>
+    {% endif %}
+{% endblock %}

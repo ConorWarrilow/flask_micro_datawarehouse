@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <!-- Include Dropzone CSS -->
+    {{ dropzone.load_css() }}
+    {{ dropzone.style('border: 2px dashed #0087F7; margin: 10%; min-height: 400px;') }}
+
+
+    {% if title %}
+        <title>PowerPy - {{ title }}</title>
+    {% else %}
+        <title>PowerPy</title>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+    <!-- extra head content can go here -->
+
+</head>
+<body>
+    <header class="site-header" style="font-size:12px;">
+      <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+        <div class="container">
+          <a class="navbar-brand mr-4" href="/">PowerPy</a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarToggle">
+            <div class="navbar-nav mr-auto">
+              <a class="nav-item nav-link" href="{{ url_for('main.home')}}">Home</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.create_folder', username=current_user.username)}}">mk fldr</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.create_worksheet', username=current_user.username)}}">mk worksheet</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.create_dashboard', username=current_user.username)}}">mk dashboard</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.view_worksheets', username=current_user.username)}}">wksheets</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.account')}}">Account</a>
+              <a class="nav-item nav-link" href="{{ url_for('main.base')}}">base</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.debug_view_folder') }}">view folder</a>
+            </div>
+            <!-- Navbar Right Side -->
+            <div class="navbar-nav">
+              {% if current_user.is_authenticated %}
+              <a class="nav-item nav-link" href="{{ url_for('posts.new_post')}}">New Post</a> <!-- don't forget, the url_for input is the name of the function in routes, not the html file name -->
+              <a class="nav-item nav-link" href="{{ url_for('users.logout')}}">Logout</a>
+              <a class="nav-item nav-link" href="{{ url_for('databases.view_databases', username=current_user.username)}}">Databases</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.query_interface', username=current_user.username)}}">Editor</a>
+              <a class="nav-item nav-link" href="{{ url_for('databases.create_database', username=current_user.username)}}">mk database</a>
+              <a class="nav-item nav-link" href="{{ url_for('databases.create_schema', username=current_user.username)}}">mk schema</a>
+              <a class="nav-item nav-link" href="{{ url_for('databases.upload')}}">upload</a>
+
+              {% else %}
+              <a class="nav-item nav-link" href="{{ url_for('users.login')}}">Login</a>
+              <a class="nav-item nav-link" href="{{ url_for('users.register')}}">Register</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <main role="main" class="container">
+      <div class="row">
+        <div class="col-md-8">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
+        <div class="col-md-4">
+          <div class="content-section">
+            <h3>Current Statistics</h3>
+            <p class='text-muted'>
+              <ul class="list-group">
+                <li class="list-group-item list-group-item-light">Total Users: {{ global_total_users }}</li>
+                <li class="list-group-item list-group-item-light">Total databases: {{ global_total_databases }} </li>
+                <li class="list-group-item list-group-item-light">Total schemas: {{ global_total_schemas }}</li>
+                <li class="list-group-item list-group-item-light">Compute Usage: {{ compute_usage }} Minutes</li>
+              </ul>
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+
+
+
+
+</body>
+</html>

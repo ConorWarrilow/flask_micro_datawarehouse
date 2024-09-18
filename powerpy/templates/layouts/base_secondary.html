@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='base.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<!--
+    {% if title %}
+    <title>PowerPy - {{ title }}</title>
+    {% else %}
+    <title>PowerPy</title>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+-->
+</head>
+<body data-username="{{ current_user.username }}">
+    <div class="flash-messages-container">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <div class="wrapper">
+
+        <section id="main-menu">
+            <div class="main-menu-container">
+                <div class="main-menu__header">
+                    <img class="rounded-circle account-img" style="width:50px; height:50px;" src="{{ image_file }}">
+                    <h2>{{ current_user.username }}</h2>
+                    
+
+                </div>
+
+
+
+                <button id="main-menu-home-button" class="main-menu-btn">
+                    <i class="custom-icon fa-solid fa-database"></i>
+                    <span class="button-text">Home</span>
+                </button>
+                <button id="main-menu-create-button" class="main-menu-btn">
+                    <i class="custom-icon fa fa-plus" aria-hidden="true"></i>
+                    <span class="button-text">Create</span>
+                </button>
+
+                <button id="main-menu-account-button" class="main-menu-btn">
+                    <i class="custom-icon far fa-user"></i>
+                    <span class="button-text">Account</span>
+                </button>
+                <button id="main-menu-worksheets-button" class="main-menu-btn">
+                    <i class="custom-icon far fa-file-alt"></i>
+                    <span class="button-text">Worksheets</span>
+                </button>
+                <button id="main-menu-databases-button" class="main-menu-btn">
+                    <i class="custom-icon fa-solid fa-database"></i>
+                    <span class="button-text">Databases</span>
+                </button>
+                <button id="main-menu-dashboards-button" class="main-menu-btn">
+                    <i class="custom-icon fas fa-chart-bar"></i>
+                    <span class="button-text">Dashboards</span>
+                </button>
+            </div>
+        </section>
+
+        <div class="main-wrapper">
+            <div class="main-container">
+                <section class="left-section">
+                    <div class="left-section-menu">
+                        {% block leftmenu %}{% endblock %}
+                    </div>
+                    <div class="left-section-contents">
+                        {% block leftcontents %}{% endblock %}
+
+                </section>
+                <div class="horizontal-resizer" id="horizontalResizer">
+                    <div class="inner"></div>
+                </div>
+
+                <section class="right-section">
+
+                                {% block rightcontents %}{% endblock %}
+
+                                </div> 
+
+
+                </section>
+
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/resizesections2.js') }}"></script>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    {% block scripts %}{% endblock %}
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            
+            alerts.forEach(alert => {
+                // Start the fade out after 10 seconds
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                }, 6000);
+    
+                // Remove the alert from the DOM after it has faded out
+                setTimeout(() => {
+                    alert.remove();
+                }, 7000); // 10 seconds + 1 second for fade out
+            });
+        });
+        </script>
+</body>
+</html>

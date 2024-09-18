@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='base.css') }}">
+    
+<!--
+    {% if title %}
+    <title>PowerPy - {{ title }}</title>
+    {% else %}
+    <title>PowerPy</title>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+-->
+</head>
+<body>
+    <div class="wrapper">
+        <!-- menu -->
+        <div class="menu">
+            <div class="menu-container">
+                <div class="menu-top">
+                    sdfsdf
+                </div>
+
+                <p>ꟼP</p>
+                <a class="nav-item nav-link" href="{{ url_for('posts.new_post')}}">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                </a>
+                <a class="nav-item nav-link" href="{{ url_for('users.logout')}}">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+                <a class="nav-item nav-link" href="{{ url_for('users.dashboards')}}">
+                    <i class="fas fa-paint-brush"></i>
+                </a>
+                <a class="nav-item nav-link" href="{{ url_for('databases.view_databases', username=current_user.username)}}">
+                    <i class="fas fa-database"></i>
+                </a>
+                <a class="nav-item nav-link" href="{{ url_for('users.account')}}">
+                    <i class="far fa-user"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-wrapper">
+            <div class="main-container">
+                {% block main %}{% endblock %}
+
+
+                <div id="databases-container" style="display:none;">
+                    alrighty this is what you need to do. Everything is honestly a complete mess. you need to fix so many things. You'll start by designing a new base template from scratch. everything, including the class names (assuming you dont convert from class names to ids for most things) need to be more specific, and then you need to create some base css things like the styling and
+                    color themes etc. you also need to fix your routes so that there isn't literally 5 routes to do what one route could do. you also need to make it so that whatever worksheet/database/schema is currently active is highlighted. also make it so that the alert message from boostrap drops down from the top and is simply shown over other content, and style it 
+                    to match the theme more. I think we can probably get rid of some of the forms, or at least make it so that there's only one form for the entire page. also need to add interactivity with the ... things on the databases etc. but do that another time.
+                </div>
+
+
+                    
+                </div>
+            </div>
+
+
+
+        </div>
+    </div>
+    
+
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

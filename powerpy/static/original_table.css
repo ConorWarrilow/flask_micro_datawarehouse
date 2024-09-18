@@ -1,0 +1,218 @@
+
+.table-container::-webkit-scrollbar {
+    width: 0px; 
+    height:50px !important;
+}
+
+/* Style for the scrollbar thumb */
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the thumb */
+    border-radius: 10px; /* Roundness of the thumb */
+    border: 0px solid #151515; /* Adds padding around the thumb */
+}
+
+/* Style for the scrollbar track */
+.table-container::-webkit-scrollbar-track {
+    background: #333; /* Color of the scrollbar track */
+    border-radius: 10px; /* Roundness of the track */
+    height:50px !important;
+}
+
+/* Style for the scrollbar corner (only visible when both horizontal and vertical scrollbars are present) */
+.table-container::-webkit-scrollbar-corner {
+    background: #151515; /* Color of the corner */
+}
+
+
+
+
+.bottom-right {
+    background-color: #252525;
+    border-top: 1px solid #424242;
+    height: 300px;
+    max-height: 800px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.table-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-top: solid 5px #383838;
+}
+
+.sql-result-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+.sql-table-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #252525;
+    color: #f9f9f9;
+    font-size: 10px;
+    height: 30px;
+    border-bottom: solid 5px #383838;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sql-table-row {
+    height: 30px;
+    color: #f9f9f9;
+    border-top: solid 1px #364A4D;
+}
+
+.sql-table-cell {
+    height: 30px;
+    padding: 0 12px;
+    line-height: 30px;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #f9f9f9;
+    font-size: 10px;
+}
+
+.resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    cursor: col-resize;
+    user-select: none;
+    height: 100%;
+    background-color: #383838;
+    z-index: 500;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+ for the column version 
+
+.bottom-right {
+    background-color: #252525;
+    border-top: 1px solid #424242;
+    height: 300px;
+    max-height: 800px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.columns-container {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: scroll;
+    width: 100%;
+    height: 100%;
+}
+
+.column-window {
+    flex: 1 1 0;
+    min-width: 100px;
+    border-right: 1px solid #424242;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.column-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #383838;
+    color: #f9f9f9;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px;
+    border-bottom: 1px solid #424242;
+}
+
+.column-content {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.scrollable-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.cell-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 20px;
+    padding: 0 10px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f9f9f9;
+    font-size: 11px;
+    border-bottom: 1px solid #364A4D;
+}
+
+.resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    background-color: #424242;
+}
+
+.columns-container::-webkit-scrollbar {
+    height: 10px;
+    width: 30px;
+}
+
+.columns-container::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 5px;
+}
+
+.columns-container::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 5px;
+}
+
+
+*/
