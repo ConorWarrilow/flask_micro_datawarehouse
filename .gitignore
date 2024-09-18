@@ -131,9 +131,6 @@ dmypy.json
 cython_debug/
 
 
-
-
-
 private/
 
 uploads/
@@ -151,3 +148,4 @@ fails_or_old/
 *.jpg 
 explanations.py
 sample_json.json
+
