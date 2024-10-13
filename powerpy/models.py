@@ -191,42 +191,6 @@ class Secrets(db.Model):
 
 from sqlglot import Tokenizer
 
-# for local or very small teams
-# all data will always be stored locally in sqlite and then external data will need to be queried in a special way somehow
-
-#need a way to access data shared between different roles
-
-#data won't be partitioned by user_id, instead it's partitioned by roles.
-
-# 
-
-# an organization has accounts, and accounts have 
-
-
-
-
-
-
-# all permissions are role based. There will be one 'super role' which is ORGADMIN. this role automatically has access to do everything any anything.
-# orgadmin can create roles and define what these roles can do. by default 
-
-
-
-
-# create an account/organization (need specific code to do so), then that account is given access to all roles (including orgadmin). That account then has permission to create other accounts, roles, as well as users.
-
-# default roles are:
-    # ORGADMIN (can create accounts)
-    # ACCOUNTADMIN (can do anything in the account except create accounts)
-    # USERADMIN(specifically for creating roles/users and assigning their privliges)
-    # SYSADMIN (can create objects and specify privliges)
-#  SYSADMIN, ACCOUNTADMIN, 
-
-
-
-# data path: uploads -> org -> account -> role -> database
-
-
 
 
 
