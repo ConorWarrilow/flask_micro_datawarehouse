@@ -1,3 +1,6 @@
+## this file is no longer used in the project - Simply keeping it for future reference
+
+
 import sqlglot
 from sqlglot.expressions import Create, Table, Identifier, Drop, Delete, Use, Select, CTE, Subquery, Insert, Update
 from sqlglot import exp
