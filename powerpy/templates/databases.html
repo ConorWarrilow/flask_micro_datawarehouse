@@ -33,13 +33,17 @@
 {% endblock %}
 
 
+
+<!-- ############################################# RIGHT ###########################################################-->
+
+
 {% block rightcontents %}
 <div class="right-section__header">
     <div class="right-section__header-left">
         <h2>Databases</h2>
     </div>
     <div class="right-section__header-right">
-        <button id="creation-btn" data-toggle="modal" data-target="#createDatabaseModal">+ Database</button>
+        <button id="creation-btn">+ Database</button>
     </div>
 </div>
 <div class="right-section__contents">
@@ -52,18 +56,18 @@
         <h2>{{ databases|length }} Databases</h2>
         <button class="custom-button-head">
             <i class="custom-icon left-icon fa-solid fa-database"></i>
-            <span class="button-name">Name <i class="sort-by fa-solid fa-arrow-down"></i></span>
-            <span class="text-1">Created <i class="sort-by fa-solid fa-arrow-down"></i></span>
-            <span class="text-2">Comment</span>
+            <span class="text-sort sortable-header header-position-name header-width-name">Name <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+            <span class="date-sort sortable-header header-position-25 header-width-6">Created <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+            <span class="header-position-40 header-width-20">Comment</span>
         </button>
     </div>
 
     {% for database in databases %} 
     <button class="custom-button" data-database-id="{{ database.id }}">
         <i class="left-icon fas fa-star"></i>
-        <span class="button-name">{{ database.database_name }}</span>
-        <span class="text-1">{{ database.date_created.strftime('%Y-%m-%d') }}</span>
-        <span class="text-2">{{ database.database_description }}</span>
+        <span class="sortable-header header-position-name header-width-name">{{ database.database_name }}</span>
+        <span class="header-position-25 header-width-6">{{ database.date_created.strftime('%Y-%m-%d') }}</span>
+        <span class="header-position-40 header-width-20">{{ database.database_description }}</span>
         <i class="right-icon fa-solid fa-ellipsis"></i>
     </button>
 
@@ -231,6 +235,41 @@
     {% endif %}
 </div>
 <div class="right-section__contents-table-footer"></div>
+
+
+
+<div id="customModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Create Database</h2>
+       
+        <form id="createDatabaseForm" autocomplete="off" novalidate>
+            <div class="form-group">
+                <label for="database_name" class="form-label">Database Name</label>
+                <input type="text" id="database_name" name="database_name" required minlength="1" maxlength="30" class="form-input">
+                <span class="error" id="database_name_error"></span>
+            </div>
+            <div class="form-group">
+                <label for="database_description" class="form-label">Database Description (optional)</label>
+                <input type="text" id="database_description" name="database_description" maxlength="100" class="form-input">
+                <span class="error" id="database_description_error"></span>
+            </div>
+            <div class="form-group">
+                <label for="default_schema" class="form-label">Default Schema</label>
+                <input type="text" id="default_schema" name="default_schema" required minlength="1" maxlength="30" class="form-input">
+                <span class="error" id="default_schema_error"></span>
+            </div>
+            <div class="form-group">
+                <label for="schema_description" class="form-label">Schema Description (optional)</label>
+                <input type="text" id="schema_description" name="schema_description" maxlength="100" class="form-input">
+                <span class="error" id="schema_description_error"></span>
+            </div>
+            <div class="modal-buttons">
+                <button type="reset" class="modal-cancel-button">Cancel</button>
+                <button type="submit" class="modal-submit-button">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -269,27 +308,21 @@
 
 
 
-
-// Get all the sortable columns
-const sortableColumns = document.querySelectorAll('.custom-button-head .button-name, .custom-button-head .text-1');
-
-// Get all the database buttons
-const databaseButtons = Array.from(document.querySelectorAll('.custom-button'));
-
-// Keep track of the current sort column and order
+/* Functions for sorting databases and worksheets */
+const sortableColumns = document.querySelectorAll('.custom-button-head .text-sort, .custom-button-head .date-sort');
+const sortableButtons = Array.from(document.querySelectorAll('.custom-button'));
 let currentSortColumn = null;
 let currentSortOrder = 'asc';
 
-// Function to toggle sort order and update arrow icon
 function toggleSortOrder(column) {
-    const arrow = column.querySelector('.sort-by');
+    const arrow = column.querySelector('.sort-arrow');
     if (column === currentSortColumn) {
         currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
         arrow.classList.toggle('fa-arrow-down', currentSortOrder === 'asc');
         arrow.classList.toggle('fa-arrow-up', currentSortOrder === 'desc');
     } else {
         if (currentSortColumn) {
-            currentSortColumn.querySelector('.sort-by').style.visibility = 'hidden';
+            currentSortColumn.querySelector('.sort-arrow').style.visibility = 'hidden';
         }
         currentSortColumn = column;
         currentSortOrder = 'asc';
@@ -297,49 +330,49 @@ function toggleSortOrder(column) {
         arrow.classList.add('fa-arrow-down');
     }
     arrow.style.visibility = 'visible';
+    arrow.style.color = "#ed9237"
 }
 
-// Function to sort database buttons
-function sortDatabases(column) {
+function sortButtons(column) {
     const index = Array.from(column.parentNode.children).indexOf(column);
-    const isDate = index === 2; // Check if sorting by date
-    const isName = index === 1; // Check if sorting by name
-
-    databaseButtons.sort((a, b) => {
+    const sortType = column.classList[0] // MAKE SURE THE SORT TYPE IS ALWAYS AT INDEX 0
+    sortableButtons.sort((a, b) => {
         let aValue = a.children[index].textContent.trim();
         let bValue = b.children[index].textContent.trim();
 
-        if (isDate) {
+        if (sortType === "date-sort") {
             aValue = new Date(aValue);
             bValue = new Date(bValue);
-        } else if (isName) {
+            console.log("something bad happening")
+        } else if (sortType === "text-sort") {
             // Case-insensitive sorting for names
             aValue = aValue.toLowerCase();
             bValue = bValue.toLowerCase();
-            
+            console.log(aValue)
+            console.log(bValue)
             // Natural sort order for alphanumeric strings
-            return currentSortOrder === 'asc' 
+            return currentSortOrder === 'desc' 
                 ? aValue.localeCompare(bValue, undefined, {numeric: true, sensitivity: 'base'})
                 : bValue.localeCompare(aValue, undefined, {numeric: true, sensitivity: 'base'});
-        }
+        } else { console.log("unexpected result") }
 
         if (aValue > bValue) return currentSortOrder === 'asc' ? -1 : 1;
         if (aValue < bValue) return currentSortOrder === 'asc' ? 1 : -1;
         return 0;
     });
 
-    // Reorder the buttons in the DOM
     const container = document.querySelector('.right-section__contents-table-header').parentNode;
-    databaseButtons.forEach(button => container.appendChild(button));
+    sortableButtons.forEach(button => container.appendChild(button));
 }
 
-// Add click event listeners to sortable columns
+
 sortableColumns.forEach(column => {
     column.addEventListener('click', () => {
         toggleSortOrder(column);
-        sortDatabases(column);
+        sortButtons(column);
     });
 });
+
 
 
 
@@ -536,6 +569,178 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById("customModal");
+    const btn = document.getElementById("creation-btn");
+    const form = document.getElementById('createDatabaseForm');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll('input[required]');
+    const closeButton = form.querySelector('.modal-cancel-button')
+    btn.onclick = function() {
+        modal.style.display = "block";
+        resetForm();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    closeButton.onclick = function() {
+        modal.style.display = "none";
+    }
+
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validateInput(this);
+            checkFormValidity();
+        });
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (validateForm()) {
+            submitForm();
+        }
+    });
+
+    function validateInput(input) {
+        const errorSpan = document.getElementById(`${input.name}_error`);
+        let errorMessage = '';
+
+        if (input.value.length > 0) {
+            if (input.value.length > 30) {
+                errorMessage = 'Must be between 2 and 30 characters.';
+            } else if (!/^[a-zA-Z0-9_]+$/.test(input.value)) {
+                errorMessage = 'Only letters, numbers, and underscores are allowed.';
+            }
+        }
+
+        if (errorMessage) {
+            errorSpan.textContent = errorMessage;
+            errorSpan.classList.add('show');
+        } else {
+            errorSpan.textContent = '';
+            errorSpan.classList.remove('show');
+        }
+
+        return !errorMessage && input.value.length > 0;
+    }
+
+    function validateForm() {
+        let isValid = true;
+        inputs.forEach(input => {
+            if (!validateInput(input)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    }
+
+    function checkFormValidity() {
+        const isValid = validateForm();
+        submitButton.disabled = !isValid;
+    }
+
+    function resetForm() {
+        form.reset();
+        inputs.forEach(input => {
+            const errorSpan = document.getElementById(`${input.name}_error`);
+            errorSpan.textContent = '';
+            errorSpan.classList.remove('show');
+        });
+        submitButton.disabled = true;
+    }
+
+    function submitForm() {
+        const formData = new FormData(form);
+        fetch('/create_database', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            },
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            if (status === 200 && body.success) {
+                modal.style.display = 'none';
+                showFlashMessage(body.flash_message, body.flash_category);
+                resetForm();
+            } else if (status === 400 && body.errors) {
+                console.log('Received errors:', body.errors);
+                Object.keys(body.errors).forEach(field => {
+                    const errorElement = document.getElementById(`${field}_error`);
+                    if (errorElement) {
+                        errorElement.textContent = body.errors[field];
+                        errorElement.classList.add('show');
+                        console.log(`Set error for ${field}:`, body.errors[field]);
+                    } else {
+                        console.error(`Error element not found for field: ${field}`);
+                    }
+                });
+            } else {
+                throw new Error('Unexpected response');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred. Please try again.', 'danger');
+        });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+function showFlashMessage(message, category) {
+    const flashContainer = document.getElementById('flash-messages');
+    if (!flashContainer) {
+        console.error('Flash message container not found');
+        return;
+    }
+
+    const flashElement = document.createElement('div');
+    flashElement.className = `alert alert-${category}`;
+    flashElement.innerHTML = `
+        <i class="fa-solid fa-circle-info"></i>
+        ${message}
+        
+    `;
+
+    flashContainer.appendChild(flashElement);
+
+    // Fade out and remove the flash message after 5 seconds
+    setTimeout(() => {
+        flashElement.classList.add('fade-out');
+        setTimeout(() => {
+            if (flashElement.parentNode === flashContainer) {
+                flashContainer.removeChild(flashElement);
+            }
+        }, 1000); // Wait for fade out animation to complete
+    }, 5000);
+}
 
 </script>
 {% endblock %}

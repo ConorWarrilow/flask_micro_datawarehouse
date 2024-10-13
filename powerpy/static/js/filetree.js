@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     schemaIcon.classList.add('fa-angle-down');
                                     
                                     // Load datafiles
-                                    fetch(`/${username}/schemas/${schemaId}/datafiles`)
+                                    fetch(`/${username}/schemas/${schemaId}/tables`)
                                         .then(response => response.json())
                                         .then(datafiles => {
                                             datafileContainer.innerHTML = '';
@@ -114,3 +114,75 @@ function filterLeftSectionContents() {
 }
 
 filterLeftSectionContents()
+
+
+
+//document.addEventListener('DOMContentLoaded', function() {
+//    const uploadsButton = document.querySelector('.uploads-dropdown-button');
+//    uploadsButton.addEventListener('click', function() {
+//        const username = this.dataset.username;
+//        const uploadsContainer = this.nextElementSibling;
+//        console.log(uploadsContainer)
+//        const icon = this.querySelector('i');
+//        if (uploadsContainer.style.display === 'none') {
+//            // Change icon to fa-angle-down
+//            icon.classList.remove('fa-angle-right');
+//            icon.classList.add('fa-angle-down');
+//            uploadsContainer.style.display = 'block'
+//
+//
+//
+//
+//    fetch(`/${username}/datafiles`)
+//    .then(response => response.json())
+//    .then(uploads => {
+//        uploadsContainer.innerHTML = ''; // making sure its empty
+//        uploads.forEach(upload => {
+//            console.log(upload)
+//            const uploadItem = document.createElement('div'); 
+//            uploadItem.className = 'schema-item'; 
+//            // the api sends the schema id (index 0) and the schema name (index 1)
+//            uploadItem.innerHTML = `
+//                <div class="tree-item">
+//                    <div class="tree-line"></div>
+//                    <button class="uploads-dropdown-button" data-upload-id="${upload[0]}">
+//                        <div class="button-left-content">
+//                            <i class="custom-icon fas fa-project-diagram"></i>
+//                            <span class="button-text">${upload[1]}</span>
+//                        </div>
+//                        <div class="button-ellipsis">
+//                            <i class="fa-solid fa-ellipsis"></i>
+//                        </div>
+//                    </button>
+//                </div>
+//            `; 
+//            uploadsContainer.appendChild(uploadItem)
+//        })
+//        
+//    })
+//
+//    } else {
+//        icon.classList.remove('fa-angle-down');
+//        icon.classList.add('fa-angle-right');
+//        uploadsContainer.style.display = 'none';
+//
+//    }
+//    })
+//
+//});
+
+//
+//
+//<div class="database-item">
+//<button class="uploads-dropdown-button" data-username="{{ current_user.username }}">
+//    <div class="button-left-content">
+//        <i class="fas fa-angle-right arrow-icon"></i>
+//        <i class="custom-icon far fa-folder"></i>
+//        <span class="button-text">Uploads</span>
+//    </div>
+//    <div class="button-ellipsis">
+//        <i class="fa-solid fa-ellipsis"></i>
+//    </div>
+//</button>
+//<div class="uploads-container" style="display: none;"></div>
+//</div>

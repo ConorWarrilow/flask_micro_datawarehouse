@@ -1,0 +1,555 @@
+{% extends "layouts/base_secondary.html" %}
+
+
+{% block head %}
+{% endblock %}
+
+
+{% block leftmenu %}
+
+
+<input type="text" id="SearchInput" class="menu-search-input" placeholder="Search..." onkeyup="filterContents()">
+
+{% endblock %}
+
+{% block leftcontents %}
+<div id="worksheets-container"> 
+    <div id="folders-container">
+        {% for folder in folders %}
+        <div class="worksheet-item" data-item-name="{{ folder.name }}">
+            <button class="folder-dropdown-button" data-folder-id="{{ folder.id }}" data-username="{{ current_user.username }}">
+                <div class="button-left-content">
+                    <i class=" fas fa-angle-right arrow-icon"></i>
+                    <i class="custom-icon far fa-folder"></i>
+                    <span class="button-text">{{ folder.name }}</span>
+                </div>
+                <div class="button-ellipsis">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+            </button>
+            <div class="child-folder-container" style="display: none;"></div>
+            <div class="child-worksheet-container" style="display: none;"></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% for worksheet in worksheets %}
+        <div class="worksheet-item" data-item-name="{{ worksheet.name }}">
+            <button class="worksheet-button original" data-worksheet-username="{{ current_user.username }}" data-worksheet-code="{{ worksheet.code }}">
+                <div class="button-left-content">
+                    <i class="custom-icon far fa-file-alt"></i>
+                    <span class="button-text">{{ worksheet.name }}</span>
+                </div>
+                <div class="button-ellipsis">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+            </button>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+
+{% block rightcontents %}
+<div class="right-section__header">
+    <div class="right-section__header-left">
+        <h2>Folder - {{ folder.name }}</h2>
+    </div>
+    <div class="right-section__header-right">
+        <button class="folder-creation-btn" data-toggle="modal" data-target="#createDatabaseModal">+ folder</button>
+        <a class="worksheet-creation-btn" href="{{ url_for('worksheets.create_worksheet', username=current_user.username, folder_id = folder.id)}}">+ worksheet</a>
+    </div>
+</div>
+<div class="right-section__contents">
+    {% if worksheets|length > 0 or folders|length > 0 %}
+    <div class="right-section__contents-table-header">
+        <button class="custom-button-head">
+            <i class="custom-icon left-icon far fa-file-alt"></i>
+            <span class="text-sort sortable-header header-position-name header-width-name">Name <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+            <span class="text-sort sortable-header header-position-18 header-width-3">Type <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+            <span class="date-sort sortable-header header-position-26 header-width-6">Created <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+            <span class="date-sort sortable-header header-position-40 header-width-20">Updated <i class="sort-arrow fa-solid fa-arrow-down"></i></span>
+        </button>
+    </div>
+
+    {% for folder in folders %} 
+    <button class="custom-button" data-folder-id="{{ folder.id }}">
+        <i class="left-icon far fa-folder"></i>
+        <span class="header-position-name header-width-name">{{ folder.name }}</span>
+        <span class="header-position-18 header-width-3">Folder</span>
+        <span class="header-position-26 header-width-6">{{ folder.date_created.strftime('%Y-%m-%d') }}</span>
+        <span class="header-position-40 header-width-20">{{ folder.last_updated }}</span>
+        <i class="right-icon fa-solid fa-ellipsis" data-folder-id="{{ folder.id }}" data-item-type="folder"></i>
+    </button>
+    {% endfor %}
+    {% for worksheet in worksheets %} 
+    <button class="custom-button" data-worksheet-code="{{ worksheet.code }}">
+        <i class="left-icon far fa-file-alt"></i>
+        <span class="header-position-name header-width-name">{{ worksheet.name }}</span>
+        <span class="header-position-18 header-width-3">Worksheet</span>
+        <span class="header-position-26 header-width-6">{{ worksheet.date_created.strftime('%Y-%m-%d') }}</span>
+        <span class="header-position-40 header-width-20">{{ worksheet.last_saved.strftime('%Y-%m-%d') }}</span>
+        <!-- Ellipsis icon -->
+        <i class="right-icon fa-solid fa-ellipsis" data-worksheet-code="{{ worksheet.code }}" data-item-type="worksheet"></i>
+    </button>
+    {% endfor %}
+
+
+    <div id="popup-menu-template" class="popup-menu" style="display: none;">
+        <ul>
+            <li data-action="delete">Delete</li>
+            <li data-action="modify">Modify</li>
+            <li data-action="move">Move</li>
+            <li data-action="favourite">Favourite</li>
+        </ul>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+    {% else %}
+
+    {% endif %}
+</div>
+<div class="right-section__contents-table-footer"></div>
+{% endblock %}
+
+
+
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/worksheettree.js') }}"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let activePopup = null;
+    let hideTimeout = null;
+    const username = document.body.dataset.username;
+
+
+    document.querySelectorAll('.right-icon').forEach(icon => {
+        icon.addEventListener('click', function(event) {
+            event.stopPropagation();
+
+            const ItemType = this.getAttribute('data-item-type')
+
+            console.log(ItemType)
+
+            if(ItemType === "worksheet"){
+                const worksheetCode = this.getAttribute('data-worksheet-code'); // NEEDS TO BE GENERALIZED
+                togglePopup(this, worksheetCode);
+            }
+        });
+    });
+
+    document.querySelectorAll('.custom-button').forEach(button => {
+        button.addEventListener('click', function() {
+            console.log('Custom button clicked for worksheet:', this.getAttribute('data-worksheet-code'));
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (activePopup && !activePopup.contains(e.target)) {
+            hidePopup(activePopup);
+        }
+    });
+
+    function togglePopup(icon, worksheetCode) {
+        if (activePopup) {
+            hidePopup(activePopup);
+        }
+
+        const existingPopup = icon.nextElementSibling;
+        if (existingPopup && existingPopup.classList.contains('popup-menu')) {
+            if (existingPopup.style.display === 'block') {
+                hidePopup(existingPopup);
+            } else {
+                showPopup(existingPopup, icon);
+            }
+        } else {
+            const newPopup = createPopup(worksheetCode);
+            icon.parentNode.insertBefore(newPopup, icon.nextSibling);
+            showPopup(newPopup, icon);
+        }
+    }
+
+    function createPopup(worksheetCode) {
+        const template = document.getElementById('popup-menu-template');
+        const popup = template.cloneNode(true);
+        popup.removeAttribute('id');
+        popup.querySelectorAll('li').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const action = this.getAttribute('data-action');
+                handleAction(action, worksheetCode);
+                hidePopup(popup);
+            });
+        });
+        return popup;
+    }
+
+    function showPopup(popup, icon) {
+        const rect = icon.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const popupHeight = popup.offsetHeight;
+
+        popup.style.display = 'block';
+        icon.classList.add('actively-clicked');
+        
+        popup.style.left = `${rect.right - popup.offsetWidth-25}px`;
+
+        if (rect.bottom + popupHeight <= windowHeight) {
+            popup.style.top = `${rect.bottom}px`;
+        } else if (rect.top - popupHeight >= 0) {
+            popup.style.top = `${rect.top - popupHeight}px`;
+        } else {
+            popup.style.top = `${Math.max(0, (windowHeight - popupHeight) / 2)}px`;
+        }
+
+        activePopup = popup;
+
+
+    }
+
+    function hidePopup(popup) {
+        if (popup) {
+            popup.style.display = 'none';
+            const associatedIcon = popup.previousElementSibling;
+            if (associatedIcon && associatedIcon.classList.contains('right-icon')) {
+                associatedIcon.classList.remove('actively-clicked');
+            }
+            activePopup = null;
+        }
+    }
+
+
+    function handleAction(action, worksheetCode) {
+        switch(action) {
+            case 'delete':
+                showDeleteConfirmation(worksheetCode);
+                break;
+            case 'modify':
+                console.log(`Modify action for worksheet: ${worksheetCode}`);
+                break;
+            case 'move':
+                console.log(`Move action for worksheet: ${worksheetCode}`);
+                break;
+            case 'favourite':
+                console.log(`Favourite action for worksheet: ${worksheetCode}`);
+                break;
+        }
+    }
+
+    function showDeleteConfirmation(worksheetCode) {
+        const confirmDialog = document.createElement('div');
+        confirmDialog.className = 'confirm-dialog';
+        confirmDialog.innerHTML = `
+            <div class="confirm-dialog-content">
+                <p>Are you sure you want to delete this worksheet?</p>
+                <button class="cancel-button">Cancel</button>
+                <button class="confirm-button">Delete</button>
+            </div>
+        `;
+        document.body.appendChild(confirmDialog);
+
+        confirmDialog.querySelector('.confirm-button').addEventListener('click', function() {
+            deleteWorksheet(worksheetCode);
+            document.body.removeChild(confirmDialog);
+        });
+
+        confirmDialog.querySelector('.cancel-button').addEventListener('click', function() {
+            document.body.removeChild(confirmDialog);
+        });
+    }
+
+
+
+
+    
+    function deleteWorksheet(worksheetCode) {
+    const url = `/${username}/worksheets/${worksheetCode}/delete`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        if (data.flash_message) {
+            showFlashMessage(data.flash_message, data.flash_category);
+        }
+        document.querySelectorAll(`[data-worksheet-code="${worksheetCode}"]`).forEach( worksheet => {
+            worksheet.remove()
+        });
+
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+        showFlashMessage(error.message, 'danger'); // Use 'danger' for errors to match Bootstrap classes
+    });
+}
+
+
+
+
+});
+
+
+
+
+
+
+function showFlashMessage(message, category) {
+    const flashContainer = document.getElementById('flash-messages');
+    if (!flashContainer) {
+        console.error('Flash message container not found');
+        return;
+    }
+
+    const flashElement = document.createElement('div');
+    flashElement.className = `alert alert-${category}`;
+    flashElement.innerHTML = `
+        <i class="fa-solid fa-circle-info"></i>
+        ${message}
+        
+    `;
+
+    flashContainer.appendChild(flashElement);
+
+    // Fade out and remove the flash message after 5 seconds
+    setTimeout(() => {
+        flashElement.classList.add('fade-out');
+        setTimeout(() => {
+            if (flashElement.parentNode === flashContainer) {
+                flashContainer.removeChild(flashElement);
+            }
+        }, 1000); // Wait for fade out animation to complete
+    }, 5000);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    function filterContents() {
+    // Get the value from the search input field
+    let input = document.getElementById('SearchInput');
+    let filter = input.value.toLowerCase();
+
+
+    // Get all the database items
+    let databaseItems = document.querySelectorAll('.worksheet-item');
+    
+    // Loop through the databases and hide/show based on the filter
+    databaseItems.forEach(function(item) {
+        let dbName = item.getAttribute('data-item-name'); // Get the database name (already lowercased)
+        let dbNameLower = dbName.toLowerCase();
+        
+        // If the database name contains the search term, display it, otherwise hide it
+        if (dbNameLower.includes(filter)) {
+            item.style.display = '';
+            item.nextElementSibling.style.display = '';
+        } else {
+            item.style.display = 'none';
+            item.nextElementSibling.style.display = 'none';
+        }
+
+
+    });
+}
+
+
+
+
+/* Functions for sorting databases and worksheets */
+const sortableColumns = document.querySelectorAll('.custom-button-head .text-sort, .custom-button-head .date-sort');
+const sortableButtons = Array.from(document.querySelectorAll('.custom-button'));
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+
+function toggleSortOrder(column) {
+    const arrow = column.querySelector('.sort-arrow');
+    if (column === currentSortColumn) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        arrow.classList.toggle('fa-arrow-down', currentSortOrder === 'asc');
+        arrow.classList.toggle('fa-arrow-up', currentSortOrder === 'desc');
+    } else {
+        if (currentSortColumn) {
+            currentSortColumn.querySelector('.sort-arrow').style.visibility = 'hidden';
+        }
+        currentSortColumn = column;
+        currentSortOrder = 'asc';
+        arrow.classList.remove('fa-arrow-up');
+        arrow.classList.add('fa-arrow-down');
+    }
+    arrow.style.visibility = 'visible';
+    arrow.style.color = "#ed9237"
+}
+
+function sortButtons(column) {
+    const index = Array.from(column.parentNode.children).indexOf(column);
+    const sortType = column.classList[0] // MAKE SURE THE SORT TYPE IS ALWAYS AT INDEX 0
+    sortableButtons.sort((a, b) => {
+        let aValue = a.children[index].textContent.trim();
+        let bValue = b.children[index].textContent.trim();
+
+        if (sortType === "date-sort") {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+            console.log("something bad happening")
+        } else if (sortType === "text-sort") {
+            // Case-insensitive sorting for names
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+            console.log(aValue)
+            console.log(bValue)
+            // Natural sort order for alphanumeric strings
+            return currentSortOrder === 'desc' 
+                ? aValue.localeCompare(bValue, undefined, {numeric: true, sensitivity: 'base'})
+                : bValue.localeCompare(aValue, undefined, {numeric: true, sensitivity: 'base'});
+        } else { console.log("unexpected result") }
+
+        if (aValue > bValue) return currentSortOrder === 'asc' ? -1 : 1;
+        if (aValue < bValue) return currentSortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const container = document.querySelector('.right-section__contents-table-header').parentNode;
+    sortableButtons.forEach(button => container.appendChild(button));
+}
+
+
+sortableColumns.forEach(column => {
+    column.addEventListener('click', () => {
+        toggleSortOrder(column);
+        sortButtons(column);
+    });
+});
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const username = document.body.dataset.username;
+    const buttons = document.querySelectorAll('.custom-button');
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const datasetItems = this.dataset; // Access all data attributes for the button
+            const worksheetCode = datasetItems.worksheetCode;
+            const folderId = datasetItems.folderId; // Check for folderId in dataset
+            const databaseId = datasetItems.databaseId; // Check for databaseId in dataset
+            const schemaId = datasetItems.schemaId; // Check for schemaId in dataset
+            console.log(datasetItems)
+            // Redirect logic based on the available data attributes
+            if (folderId) {
+                window.location.href = `/${username}/worksheets/folder/${folderId}`;
+            } else if (databaseId) {
+                window.location.href = `/${username}/databases/${databaseId}`;
+            } else if (schemaId) {
+                window.location.href = `/${username}/databases/schemas/${schemaId}`;
+            } else {
+                window.location.href = `/${username}/query/${worksheetCode}`;
+            }
+        });
+    });
+});
+
+
+
+
+
+
+</script>
+{% endblock %}

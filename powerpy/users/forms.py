@@ -52,6 +52,8 @@ class RegistrationForm(FlaskForm):
                             validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', 
                             validators=[DataRequired(), EqualTo('password')])
+    code = PasswordField('Code', 
+                            validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
@@ -81,8 +83,6 @@ class LoginForm(FlaskForm):
 
 
 class UpdateAccountForm(FlaskForm):
-    """We only want to query the database if a user changes their username, else it'll alert that someone already has that username (because that's their current
-    username in the database). We import user from flask_login to check if any changes were made"""
     username = StringField('Username',
                             validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email',

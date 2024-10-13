@@ -3,9 +3,12 @@ import re
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, InputRequired
 import os
-
 from typing import List, Union
 from flask_wtf import FlaskForm
+import logging
+from logging.handlers import RotatingFileHandler
+import os
+import uuid
 
 
 class Flash:
@@ -133,217 +136,42 @@ class CustomValidator:
 
 
 
+def generate_uuid(length: int) -> str:
+    random_string = uuid.uuid4().hex[:length]
+    return random_string
 
 
-import duckdb
+def configure_loggers(app):
+    """
+    Sets up two separate loggers:   
 
-class GigaDuck():
-    def __init__(self, database=None, user_id=None, default_db=None, default_schema= None):
-        """
-        Initializes a GigaDuck object. If a database is provided, it connects to that DuckDB database.
-        Otherwise, it creates a GigaDuck object without an active connection.
+    1. **Standard Logger**:
+       - Captures general logs
 
-        Args:
-            database (str, unnecessary): Path to a DuckDB database file. If None, no connection is initialized.
-            user_id (int, mandatory): User's id
-            schema_id (int, mandatory): User's selected schema
-            database_id (int, mandatory):User's selected database
-        """
-        if database is not None:
-            # Establish a connection to the provided DuckDB database
-            self.connection = duckdb.connect(database=database)
-        else:
-            # No connection is initialized yet
-            self.connection = None
+    2. **Route Logger**:
+       - Logs the route being used for each request, make with the line number and path name. Makes it easy to track down the code when errors occur.
+    """
 
-        self.user_id = user_id
-        self.default_db = default_db
-        self.default_schema = default_schema
+    standard_log_dir = 'logs/standard_logs'
+    route_log_dir = 'logs/route_logs'
 
-    @staticmethod
-    def transform_query_for_parquet(query, user_id, default_db, default_schema):
-        """
-        Transforms SQL queries by adding '.parquet' to table names after 'FROM' or 'JOIN' clauses.
-        Handles table names with optional aliases and adds single quotes around paths.
-        Skips transformation for CTEs.
-        
-        Args:
-            query (str): The original SQL query.
-            user_id (str): The user-specific directory path.
-            default_db (str): The default database name.
-            default_schema (str): The default schema name.
-        
-        Returns:
-            str: The transformed query with '.parquet' added to table names.
-        """
+    os.makedirs(standard_log_dir, exist_ok=True)
+    os.makedirs(route_log_dir, exist_ok=True)
+
+    standard_log_file = os.path.join(standard_log_dir, 'standard_logs.log')
+    standard_log_handler = RotatingFileHandler(standard_log_file, maxBytes=100000, backupCount=100)
+    standard_log_handler.setLevel(logging.INFO)
+    standard_log_formatter = logging.Formatter('%(asctime)s - %(pathname)s:%(lineno)d - %(levelname)s - %(message)s')
+    standard_log_handler.setFormatter(standard_log_formatter)
+    app.logger.addHandler(standard_log_handler)
     
-        def replace_table(match):
-            """
-            Replaces table names in the query with their corresponding '.parquet' suffix.
-            Handles table names with optional aliases and adds single quotes around paths.
-            """
-            clause = match.group(1)  # FROM or JOIN
-            tables = match.group(2)  # List of tables, possibly separated by commas
-            
-            # List to store tables with '.parquet' added
-            table_list = []
-            for table in tables.split(','):
-                parts = table.strip().split()  # Separate table name and alias
-                table_name = parts[0]  # Original table name
-                alias = " ".join(parts[1:])  # Keep any alias
-                
-                # Skip CTEs from being transformed
-                if table_name in cte_names:
-                    table_list.append(f"{table_name} {alias}".strip())
-                    continue
-                
-                # Determine if the table name already includes database/schema
-                if '.' in table_name:
-                    parts = table_name.split('.')
-                    if len(parts) == 3:
-                        database, schema, table_name = parts
-                        table_name = f"uploads/{user_id}/{database}/{schema}/{table_name}.parquet"
-                    elif len(parts) == 2:
-                        schema, table_name = parts
-                        table_name = f"uploads/{user_id}/{default_db}/{schema}/{table_name}.parquet"
-                    else:
-                        # Handle additional dots if necessary
-                        table_name = f"uploads/{user_id}/{default_db}/{default_schema}/{table_name}.parquet"
-                else:
-                    table_name = f"uploads/{user_id}/{default_db}/{default_schema}/{table_name}.parquet"
-    
-                # Add single quotes around the table name
-                table_list.append(f"'{table_name}' {alias}".strip())
-    
-            # Return the replaced clause with '.parquet' added to all table names
-            return f"{clause} {', '.join(table_list)}"
-    
-        def join_check(query):
-            """
-            Checks for JOIN clauses and ensures proper formatting.
-            """
-            join_pattern = r'\bJOIN\s+(\w+(?:\.\w+)?(?:\.\w+)?)'
-    
-            def replace_join(match):
-                table_name = match.group(1)
-    
-                # Skip CTEs from being transformed
-                if table_name in cte_names:
-                    return f"JOIN {table_name}"
-    
-                # Transform table name
-                if '.' in table_name:
-                    parts = table_name.split('.')
-                    if len(parts) == 3:
-                        database, schema, table_name = parts
-                        transformed_table_name = f"'uploads/{user_id}/{database}/{schema}/{table_name}.parquet'"
-                    elif len(parts) == 2:
-                        schema, table_name = parts
-                        transformed_table_name = f"'uploads/{user_id}/{default_db}/{schema}/{table_name}.parquet'"
-                    else:
-                        transformed_table_name = f"'uploads/{user_id}/{default_db}/{default_schema}/{table_name}.parquet'"
-                else:
-                    transformed_table_name = f"'uploads/{user_id}/{default_db}/{default_schema}/{table_name}.parquet'"
-    
-                return f"JOIN {transformed_table_name}"
-    
-            # Apply transformation globally
-            transformed_query = re.sub(join_pattern, replace_join, query, flags=re.IGNORECASE | re.DOTALL)
-            return transformed_query
-    
-        def extract_cte_names(query):
-            """
-            Extracts CTE names from the query. CTE names are collected to begin with. When transforming table names we simply check
-            if they've been identified as a cte. if so, no transformation is made.
-            """
-            cte_pattern = r'(\w+)\s+AS\s+\('
-            return re.findall(cte_pattern, query, flags=re.IGNORECASE)
-    
-        # Step 1: Extract CTE names
-        cte_names = extract_cte_names(query)
-    
-        # Step 2: Apply transformations for FROM and JOIN clauses
-        table_pattern = r'\b(FROM|JOIN)\s+((?:\w+(?:\.\w+)?(?:\.\w+)?\s*(?:,\s*)?)+)(?!\()'
-        transformed_query = re.sub(table_pattern, replace_table, query, flags=re.IGNORECASE | re.DOTALL)
-    
-        # Step 3: Apply JOIN specific transformations
-        transformed_query = join_check(transformed_query)
-    
-        return transformed_query
+    route_logger = logging.getLogger('route_logger')
+    route_logger.setLevel(logging.INFO)
+    route_log_file = os.path.join(route_log_dir, 'route_logs.log') 
+    route_log_handler = RotatingFileHandler(route_log_file, maxBytes=100000, backupCount=100)
+    route_log_formatter = logging.Formatter('%(asctime)s - %(pathname)s:%(lineno)d - %(levelname)s - %(message)s')
+    route_log_handler.setFormatter(route_log_formatter)
+    route_logger.addHandler(route_log_handler)
 
-    def query(self, query):
-        """
-        Executes a transformed SQL query (with '.parquet' table names) using the DuckDB connection.
-        If no database connection is active, an in-memory DuckDB connection is used.
 
-        Args:
-            query (str): The original SQL query.
-
-        Returns:
-            duckdb.DuckDBPyRelation: The result of the query as a DuckDB relation object.
-        """
-        # Transform the query to replace table names with '.parquet' suffix
-        transformed_query = self.transform_query_for_parquet(query, user_id= self.user_id, default_db = self.default_db, default_schema=self.default_schema)
-        print(transformed_query)
-
-        # Execute the query using the current connection or an in-memory DuckDB connection
-        if self.connection:
-            return self.connection.query(transformed_query)
-        else:
-            # Use in-memory DuckDB connection if no database is connected
-            return duckdb.query(transformed_query)
-
-    def execute_df(self, query):
-        """
-        Executes a transformed SQL query and fetches the results as a DataFrame-like structure.
-        If no database connection is active, it returns a warning message.
-
-        Args:
-            query (str): The original SQL query.
-
-        Returns:
-            DataFrame-like: The result of the query as a DataFrame (default DuckDB format).
-        """
-        # Transform the query to replace table names with '.parquet' suffix
-        transformed_query = self.transform_query_for_parquet(query, user_id= self.user_id, default_db = self.default_db, default_schema=self.default_schema)
-
-        if self.connection:
-            # Execute the query and return results as a DuckDB DataFrame
-            return self.connection.execute(transformed_query).fetch_df()
-        else:
-            # If no connection is available, print a warning message
-            print('No database connection found. Use connect(database) to establish a connection.')
-            return None
-        
-    def execute(self, query):
-        """
-        Executes a transformed SQL query.
-        If no database connection is active, it returns a warning message.
-
-        Args:
-            query (str): The original SQL query.
-
-        Returns:
-            DataFrame-like: The result of the query as a DataFrame (default DuckDB format).
-        """
-        # Transform the query to replace table names with '.parquet' suffix
-        transformed_query = self.transform_query_for_parquet(query, user_id= self.user_id, default_db = self.default_db, default_schema=self.default_schema)
-
-        if self.connection:
-            # Execute the query and return results as a DuckDB DataFrame
-            return self.connection.execute(transformed_query)
-        else:
-            # If no connection is available, print a warning message
-            print('No database connection found. Use connect(database) to establish a connection.')
-            return None
-
-    def connect(self, database):
-        """
-        Connects to a DuckDB database, replacing the existing connection if one already exists.
-
-        Args:
-            database (str): Path to the DuckDB database file.
-        """
-        # Establish a new connection to the provided DuckDB database
-        self.connection = duckdb.connect(database)
 

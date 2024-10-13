@@ -21,7 +21,7 @@
     --theme-filter_button_text: #151515;
     --theme-link_text: #e9e5df;
 
-    /* Code Blocks */
+    /* Code Blocks */   
     --theme-code_border: #424242;
     --theme-code__text__primary: #4295a0;
     --theme-code_background: #252525;
@@ -266,7 +266,7 @@ html {
 .left-section-contents button:hover {
     background-color: #424242;
 }
-
+.uploads-container button,
 .schema-container button,
 .child-worksheet-container button,
 .child-folder-container button {
@@ -304,7 +304,7 @@ i.custom-icon {
 
 .tree-line {
     flex: 0 0 10px;
-    border-right: 1px solid #ee3a1e91;
+    border-right: 1px solid #447075;
     height: 30px; /* Make the schema line full height */
     box-sizing: border-box;
 }
@@ -313,7 +313,7 @@ i.custom-icon {
 
 .tree-line-two {
     flex: 0 0 20px;
-    border-right: 1px solid #ee391e;
+    border-right: 1px solid #447075;
     height: 30px; /* Make the schema line full height */
     box-sizing: border-box;
 }

@@ -126,7 +126,7 @@
                             </div>
                             {% for worksheet in root_worksheets %}
                                 <div class="worksheet-item">
-                                    <button id="worksheetButton" class="worksheet-button original" data-worksheet-username="{{ current_user.username }}" data-worksheet-code="{{ worksheet.code }}">
+                                    <button class="worksheet-button original" data-worksheet-username="{{ current_user.username }}" data-worksheet-code="{{ worksheet.code }}">
                                         <div class="button-left-content">
                                             <i class="custom-icon far fa-file-alt"></i>
                                             <span class="button-text">{{ worksheet.name }}</span>
@@ -204,7 +204,7 @@
             </div>
             <!-- footer -->
             <div class="footer">
-                <p style="margin:0px; padding:0px;">Compute Usage: {{ compute_usage }} minutes</p>
+                
                 <!-- Footer content will go here -->
             </div>
         </div>

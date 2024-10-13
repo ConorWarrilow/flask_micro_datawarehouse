@@ -1,7 +1,8 @@
 from flask import render_template, request, url_for, Blueprint
 from powerpy.models import Post, Database
 from flask_login import current_user, login_required
-
+import logging 
+import os
 # similar to app = Flask(__name__)
 main = Blueprint('main', __name__)
 
@@ -14,7 +15,14 @@ def inject_total_databases():
 
 
 
-
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(log_dir, 'flask_logs.log'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+route_logger = logging.getLogger('route_logger')
 
 
 

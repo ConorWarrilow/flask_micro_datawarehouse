@@ -24,7 +24,7 @@
     <!-- extra head content can go here -->
 
 </head>
-<body>
+<body data-username="{{ current_user.username}}">
     <header class="site-header" style="font-size:12px;">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
         <div class="container">
@@ -35,13 +35,12 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('main.home')}}">Home</a>
-              <a class="nav-item nav-link" href="{{ url_for('users.create_folder', username=current_user.username)}}">mk fldr</a>
-              <a class="nav-item nav-link" href="{{ url_for('users.create_worksheet', username=current_user.username)}}">mk worksheet</a>
+              <a class="nav-item nav-link" href="{{ url_for('worksheets.create_folder', username=current_user.username)}}">mk fldr</a>
+              <a class="nav-item nav-link" href="{{ url_for('worksheets.create_worksheet', username=current_user.username)}}">mk worksheet</a>
               <a class="nav-item nav-link" href="{{ url_for('users.create_dashboard', username=current_user.username)}}">mk dashboard</a>
-              <a class="nav-item nav-link" href="{{ url_for('users.view_worksheets', username=current_user.username)}}">wksheets</a>
+              <a class="nav-item nav-link" href="{{ url_for('worksheets.view_worksheets', username=current_user.username)}}">wksheets</a>
               <a class="nav-item nav-link" href="{{ url_for('users.account')}}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('main.base')}}">base</a>
-              <a class="nav-item nav-link" href="{{ url_for('users.debug_view_folder') }}">view folder</a>
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
@@ -85,7 +84,7 @@
                 <li class="list-group-item list-group-item-light">Total Users: {{ global_total_users }}</li>
                 <li class="list-group-item list-group-item-light">Total databases: {{ global_total_databases }} </li>
                 <li class="list-group-item list-group-item-light">Total schemas: {{ global_total_schemas }}</li>
-                <li class="list-group-item list-group-item-light">Compute Usage: {{ compute_usage }} Minutes</li>
+                
               </ul>
             </p>
           </div>

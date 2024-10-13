@@ -108,12 +108,12 @@ html {
 .header {
     flex: 0 0 30px;
 
-    background-color: #252525;
+    background-color: var(--theme-footer);
     border-bottom: solid 1px #424242;
 }
 
 #main-menu {
-    background-color: #252525;
+    background-color: var(--theme-footer);
     width: 220px; /* Adjust width if needed */
     min-width: 220px;
     max-width: 220px;
@@ -143,9 +143,6 @@ html {
         background-color: var(--theme-code_border);
     }
 
-
-
-
 .main-menu-container h2 {
     color: var(--theme-code__text__primary);
     font-size: 20px;
@@ -155,13 +152,6 @@ html {
     margin:0;
 }
 
-
-
-
-
-
-
-/* Define a base style for the button */
 .main-menu-btn {
     margin: 5px 0px;
     padding-left: 10px;
@@ -177,6 +167,17 @@ html {
     transition: background-color 0.3s ease, border-color 0.3s ease;
     cursor: pointer;
     border:none;
+}
+
+.main-menu-btn:focus {
+    background-color: var(--theme-primary);
+    outline:none;
+}
+
+/* Active state (when button is pressed) */
+.main-menu-btn:active {
+    background-color: #84dfd6; /* Even darker shade for the background */
+    transform: scale(0.98); /* Slightly scale down the button for a pressed effect */
 }
 
 /* Hover state */
@@ -200,43 +201,7 @@ html {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* for the main menu when it's smaller */
 
 .nav-item {
     display: flex;
@@ -259,13 +224,31 @@ html {
 
 .footer {
     flex: 0 0 30px;
-    background-color: #252525;
+    background-color: var(--theme-footer);
     border-top: solid 1px #424242;
     color: rgb(234, 234, 234);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ##################################################################### LEFT SECTION ################################################################### */
+
 .left-section {
-    background-color: #252525;
+    background-color: var(--theme-footer);
     width: 250px;
     max-width: 600px;
     overflow-y:auto;
@@ -294,18 +277,12 @@ html {
 }
 
 
-
-
-
-
-
-
-
 .left-section-menu {
-    background-color: #252525;
-    padding: 5px;
+    background-color: var(--theme-footer);
+    padding:0px;
     height: 40px;
-    border-bottom: solid 1px #424242;
+   /* border-bottom: solid 1px #424242; */
+    border-bottom: none;
     display: flex;
     align-items: center; /* Align items vertically in the center */
     gap: 10px; /* Space between items */
@@ -358,9 +335,9 @@ html {
     background-color: var(--theme-footer);
     border:none;
     border-radius: 4px;
-    padding: 1px 5px;
-    font-size:0.8rem;
-    margin:0px 6px;
+    padding: 5px 5px;
+    font-size:1rem;
+    margin:10px 10px 0px 10px;
     color: var(--theme-text);
     width:100%;
     overflow: hidden;
@@ -382,7 +359,7 @@ html {
     outline: solid 1.5px var(--theme-text);
 
 }
-/* ------------------------------ DATABASE AND WORKSHEET FILE TREES ------------------------------ */
+/* ----------DATABASE AND WORKSHEET FILE TREES -------------- */
 
 
 /* containers which wraps around all databases and worksheets */
@@ -406,7 +383,7 @@ html {
 .left-section-contents button {
     display: flex;
     align-items: center;
-    background-color: #252525;
+    background-color: var(--theme-footer);
     height: 30px;
     border-radius: 4px;
     font-size: 12px;
@@ -483,20 +460,12 @@ i.custom-icon {
     margin-right: 10px; /* Fixed space after icon */
 }
 
-
-
-
-
-
-
 .tree-line {
     flex: 0 0 10px;
     border-right: 1px solid var(--theme-primary);
     height: 30px; /* Make the schema line full height */
     box-sizing: border-box;
 }
-
-
 
 .tree-line-two {
     flex: 0 0 20px;
@@ -540,7 +509,7 @@ i.custom-icon {
 
 
 
-
+/* ############################################################################ HORIZONTAIL RESIZER ####################################################################################### */
 
 .horizontal-resizer {
     width: 1px;
@@ -590,7 +559,7 @@ i.custom-icon {
 
 
 
-
+/* ############################################################################ RIGHT SECTION ####################################################################################### */
 
 .right-section {
     flex-grow: 1;
@@ -610,6 +579,7 @@ i.custom-icon {
     width: 100%;
     align-items:center;
     margin-top:25px;
+    z-index:10;
 
 }
 
@@ -627,8 +597,6 @@ i.custom-icon {
 
 
 #creation-btn {
-    /*margin: 5px 0px; */
-   /* padding-left: 10px; */
     height:35px;
 
     font-size: 16px;
@@ -642,6 +610,63 @@ i.custom-icon {
     cursor: pointer;
     padding:0px 10px 0px 10px;
 }
+
+
+
+
+
+.worksheet-creation-btn,
+.folder-creation-btn {
+    height:35px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    border:none;
+    background-color: var(--theme-primary);
+    color: var(--theme-text);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+}
+
+.worksheet-creation-btn:hover,
+.folder-creation-btn:hover {
+    background-color: var(--theme-secondary);
+    color: var(--theme-text);
+    text-decoration: none;
+}
+
+.worksheet-creation-btn {
+    width: 110px;
+    border-top-right-radius: 4px;
+    border-left: solid 1.5px var(--theme-footer);
+    border-bottom-right-radius: 4px;
+}
+
+.folder-creation-btn {
+    border-right: solid 1.5px var(--theme-footer);
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -741,33 +766,12 @@ i.custom-icon {
     flex-grow: 1;
 }
 
-
-
-
-
-
-
-
-
-
 /* Hover state */
 #creation-btn:hover,
 .modal-submit-button:hover {
     background-color: var(--theme-code__text__secondary); /* Darker shade of the background color */
 }
 
-/* Focus state */
-.main-menu-btn:focus {
-    background-color: var(--theme-primary);
-
-    outline:none;
-}
-
-/* Active state (when button is pressed) */
-.main-menu-btn:active {
-    background-color: #004494; /* Even darker shade for the background */
-    transform: scale(0.98); /* Slightly scale down the button for a pressed effect */
-}
 
 
 
@@ -786,14 +790,7 @@ h2 {
 
 
 
-.break-line {
-    height:1px;
-    width:100%;
-    background: linear-gradient(to right, 
-    var(--theme-code_border) 0%, 
-    var(--theme-code__text__secondary) 50%, 
-    var(--theme-code_border) 100%);
-}
+
 
 
 
@@ -809,7 +806,6 @@ h2 {
     width: 100%;
     background-color: var(--theme-footer);
     color: var(--theme-text);
-
     border:none;
     transition: background-color 0.3s ease;
     overflow: hidden;
@@ -820,6 +816,7 @@ h2 {
 .custom-button {
     height:40px;
     border-top:solid 1px var(--theme-code_border);
+    cursor:pointer;
 
 }
 
@@ -829,17 +826,13 @@ h2 {
 }
 
 .custom-button-head span{
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 .custom-button span{
     font-size: 0.8rem;
-}
-
-.custom-button span.button-name{
-    font-size: 0.8rem;
-    text-transform: uppercase;
 }
 
 
@@ -874,43 +867,438 @@ h2 {
     width:40px;
 }
 
-.button-name {
-    left: 40px;
-    width:18%;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.sortable-header {
     cursor: pointer;
 }
-
-.button-name > i.sort-by,
-.text-1 > i.sort-by {
+.sortable-header i {
     visibility: hidden;
-}
-
-.text-1 {
-    left: 25%;
-    width: 15%;
-    cursor: pointer;
+    font-size: 0.9rem;
 }
 
 
-.button-name:hover > i.sort-by,
-.text-1:hover > i.sort-by {
+
+.sortable-header:hover i {
     visibility: visible;
 }
 
-.text-2 {
+.unsortable-header {
+    visibility: visible; /* no actual styling, just used as a placeholder to make it obvious that it shouldn't be sortable */
+}
+
+
+
+
+.header-position-name {
+    left: 40px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+
+
+
+.header-position-1 {
+    left: 1%;
+}
+.header-position-2 {
+    left: 2%;
+}
+.header-position-3 {
+    left: 3%;
+}
+.header-position-4 {
+    left: 4%;
+}
+.header-position-5 {
+    left: 5%;
+}
+.header-position-6 {
+    left: 6%;
+}
+.header-position-7 {
+    left: 7%;
+}
+.header-position-8 {
+    left: 8%;
+}
+.header-position-9 {
+    left: 9%;
+}
+.header-position-10 {
+    left: 10%;
+}
+.header-position-11 {
+    left: 11%;
+}
+.header-position-12 {
+    left: 12%;
+}
+.header-position-13 {
+    left: 13%;
+}
+.header-position-14 {
+    left: 14%;
+}
+.header-position-15 {
+    left: 15%;
+}
+.header-position-16 {
+    left: 16%;
+}
+.header-position-17 {
+    left: 17%;
+}
+.header-position-18 {
+    left: 18%;
+}
+.header-position-19 {
+    left: 19%;
+}
+.header-position-20 {
+    left: 20%;
+}
+.header-position-21 {
+    left: 21%;
+}
+.header-position-22 {
+    left: 22%;
+}
+.header-position-23 {
+    left: 23%;
+}
+.header-position-24 {
+    left: 24%;
+}
+.header-position-25 {
+    left: 25%;
+}
+.header-position-26 {
+    left: 26%;
+}
+.header-position-27 {
+    left: 27%;
+}
+.header-position-28 {
+    left: 28%;
+}
+.header-position-29 {
+    left: 29%;
+}
+.header-position-30 {
+    left: 30%;
+}
+.header-position-31 {
+    left: 31%;
+}
+.header-position-32 {
+    left: 32%;
+}
+.header-position-33 {
+    left: 33%;
+}
+.header-position-34 {
+    left: 34%;
+}
+.header-position-35 {
+    left: 35%;
+}
+.header-position-36 {
+    left: 36%;
+}
+.header-position-37 {
+    left: 37%;
+}
+.header-position-38 {
+    left: 38%;
+}
+.header-position-39 {
+    left: 39%;
+}
+.header-position-40 {
+    left: 40%;
+}
+.header-position-41 {
+    left: 41%;
+}
+.header-position-42 {
     left: 42%;
-    width: 52%;
+}
+.header-position-43 {
+    left: 43%;
+}
+.header-position-44 {
+    left: 44%;
+}
+.header-position-45 {
+    left: 45%;
+}
+.header-position-46 {
+    left: 46%;
+}
+.header-position-47 {
+    left: 47%;
+}
+.header-position-48 {
+    left: 48%;
+}
+.header-position-49 {
+    left: 49%;
+}
+.header-position-50 {
+    left: 50%;
+}
+.header-position-51 {
+    left: 51%;
+}
+.header-position-52 {
+    left: 52%;
+}
+.header-position-53 {
+    left: 53%;
+}
+.header-position-54 {
+    left: 54%;
+}
+.header-position-55 {
+    left: 55%;
+}
+.header-position-56 {
+    left: 56%;
+}
+.header-position-57 {
+    left: 57%;
+}
+.header-position-58 {
+    left: 58%;
+}
+.header-position-59 {
+    left: 59%;
+}
+.header-position-60 {
+    left: 60%;
+}
+.header-position-61 {
+    left: 61%;
+}
+.header-position-62 {
+    left: 62%;
+}
+.header-position-63 {
+    left: 63%;
+}
+.header-position-64 {
+    left: 64%;
+}
+.header-position-65 {
+    left: 65%;
+}
+.header-position-66 {
+    left: 66%;
+}
+.header-position-67 {
+    left: 67%;
+}
+.header-position-68 {
+    left: 68%;
+}
+.header-position-69 {
+    left: 69%;
+}
+.header-position-70 {
+    left: 70%;
+}
+.header-position-71 {
+    left: 71%;
+}
+.header-position-72 {
+    left: 72%;
+}
+.header-position-73 {
+    left: 73%;
+}
+.header-position-74 {
+    left: 74%;
+}
+.header-position-75 {
+    left: 75%;
+}
+.header-position-76 {
+    left: 76%;
+}
+.header-position-77 {
+    left: 77%;
+}
+.header-position-78 {
+    left: 78%;
+}
+.header-position-79 {
+    left: 79%;
+}
+.header-position-80 {
+    left: 80%;
+}
+.header-position-81 {
+    left: 81%;
+}
+.header-position-82 {
+    left: 82%;
+}
+.header-position-83 {
+    left: 83%;
+}
+.header-position-84 {
+    left: 84%;
+}
+.header-position-85 {
+    left: 85%;
+}
+.header-position-86 {
+    left: 86%;
+}
+.header-position-87 {
+    left: 87%;
+}
+.header-position-88 {
+    left: 88%;
+}
+.header-position-89 {
+    left: 89%;
+}
+.header-position-90 {
+    left: 90%;
+}
+.header-position-91 {
+    left: 91%;
+}
+.header-position-92 {
+    left: 92%;
+}
+.header-position-93 {
+    left: 93%;
+}
+.header-position-94 {
+    left: 94%;
+}
+.header-position-95 {
+    left: 95%;
+}
+.header-position-96 {
+    left: 96%;
+}
+.header-position-97 {
+    left: 97%;
+}
+.header-position-98 {
+    left: 98%;
+}
+.header-position-99 {
+    left: 99%;
+}
+.header-position-100 {
+    left: 100%;
+}
+
+
+
+
+.header-width-name {
+    width:18%;
+}
+
+.header-width-1 {
+    width: 5%;
+}
+.header-width-2 {
+    width: 7%;
+}
+.header-width-3 {
+    width: 9%;
+}
+.header-width-4 {
+    width: 11%;
+}
+.header-width-5 {
+    width: 13%;
+}
+.header-width-6 {
+    width: 15%;
+}
+.header-width-7 {
+    width: 17%;
+}
+.header-width-8 {
+    width: 19%;
+}
+.header-width-9 {
+    width: 21%;
+}
+.header-width-10 {
+    width: 23%;
+}
+.header-width-11 {
+    width: 25%;
+}
+.header-width-12 {
+    width: 27%;
+}
+.header-width-13 {
+    width: 29%;
+}
+.header-width-14 {
+    width: 31%;
+}
+.header-width-15 {
+    width: 33%;
+}
+.header-width-16 {
+    width: 35%;
+}
+.header-width-17 {
+    width: 37%;
+}
+.header-width-18 {
+    width: 40%;
+}
+.header-width-19 {
+    width: 45%;
+}
+.header-width-20 {
+    width: 50%;
 }
 
 .right-icon {
     right: 10px;
-    width:24px;
-    padding:2px 1px;
+    width:30px;
+    padding:4px 4px;
     background-color: none;
     align-items: center;
     text-align: center;
     border-radius: 4px;
     cursor: pointer;
+    z-index: 5;
 
 }
 
@@ -923,6 +1311,39 @@ h2 {
 }
 
 
+.right-icon.actively-clicked {
+    background-color: var(--theme-background);
+}
+
+/* RIGHT ELLIPSIS POPUP MENU */
+
+.popup-menu {
+    position: fixed; /* Changed from absolute to fixed */
+    background-color: var(--theme-footer);
+    border: 1px solid var(--theme-code_border);
+    border-radius: 4px;
+    box-shadow: none;
+    display: none;
+    padding: 5px 0;
+    z-index: 1000; /* Ensure it's above other elements */
+    color: var(--theme-text)
+}
+
+.popup-menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.popup-menu li {
+    padding: 5px 20px;
+    cursor: pointer;
+    white-space: nowrap; /* Prevent wrapping of text */
+}
+
+.popup-menu li:hover {
+    background-color: var(--theme-code_border);
+}
 
 
 
@@ -931,39 +1352,60 @@ h2 {
 
 
 
+/* CUSTOM DELETE MODAL */
+.confirm-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* the screen's background when the confirm dialog pops up */
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirm-dialog-content {
+    background: var(--theme-footer);
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    color: var(--theme-text);
+    border: solid 1px var(--theme-code_border);
+}
+
+.confirm-dialog .confirm-button,
+.confirm-dialog .cancel-button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.confirm-dialog .confirm-button {
+    background-color: var(--theme-secondary);
+    border: none;
+}
+.confirm-dialog .cancel-button {
+    background: none;
+    border: solid 1px var(--theme-code_border);
+    color: var(--theme-text);
+}
+
+.confirm-dialog .confirm-button:hover {
+
+    background-color: #e7811b;
+
+}
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.confirm-dialog .cancel-button:hover {
+    background: none;
+    border: solid 1px var(--theme-text);
+    color: var(--theme-text);
+}
 
 
 
@@ -1073,44 +1515,51 @@ h2 {
     text-decoration: none;
   }
 
-.modal-submit-button {
-    height:35px;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: left;
-    border: none;
-    border-radius: 4px;
-    background-color: var(--theme-primary); /* Primary background color */
-    color: var(--theme-text); /* Text color */
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    cursor: pointer;
-    padding: 0px 10px 0px 10px;
-}
 
 .position-right {
     text-align: right;
 }
 
 
-.modal-close-button {
-    height:35px;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: left;
-    border: none;
-    border-radius: 4px;
-    background-color: var(--theme-primary); /* Primary background color */
-    color: var(--theme-text); /* Text color */
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    cursor: pointer;
-    padding: 0px 10px 0px 10px;
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px; /* Adds some space above the buttons */
+}
+
+.form-buttons button {
+    margin-left: 10px; /* Adds space between the buttons */
 }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+.flash-messages {
+    width: 80%;
+    max-width: 600px;
+
+}
+*/
+
+
 .flash-messages-container {
     position: fixed;
-    top: 20px;
+    top: 30px;
     left: 0;
     right: 0;
     z-index: 1000;
@@ -1119,48 +1568,285 @@ h2 {
     pointer-events: none;
     text-align: center;
 }
-/*
-.flash-messages {
-    width: 80%;
-    max-width: 600px;
 
+.flash-messages {
+    max-width: 80%; /* Limit width of messages */
 }
-*/
+
 .alert {
-    padding: 15px;
+    padding: 15px 15px 15px 15px; /* Extra padding on right for close button */
     margin-bottom: 10px;
     border: 1px solid transparent;
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
     pointer-events: auto;
     transition: opacity 1s ease-in-out;
+    position: relative; /* For positioning close button */
 }
 
 .alert.fade-out {
     opacity: 0;
 }
 
+.alert .fa-circle-info {
+    margin-right: 5px;
+}
+
+
 .alert-success {
-    color: #155724;
-    background-color: rgba(212, 237, 218, 0.9);
-    border-color: #c3e6cb;
+    color: #279a41;
+    background-color: var(--theme-footer);
+    border-color: #279a41;
 }
 
 .alert-danger {
-    color: #721c24;
-    background-color: rgba(248, 215, 218, 0.9);
-    border-color: #f5c6cb;
+    color: #ac2a37;
+    background-color: var(--theme-footer);
+    border-color: #ac2a37;
 }
 
 .alert-warning {
-    color: #856404;
+    color: var(--theme-secondary);
     background-color: rgba(255, 243, 205, 0.9);
-    border-color: #ffeeba;
+    border-color: var(--theme-secondary);
 }
 
 .alert-info {
-    color: #0c5460;
+    color: var(--theme-accent);
     background-color: rgba(209, 236, 241, 0.9);
     border-color: #bee5eb;
 }
+
+/* optional close button. if you want to use it you need to add extra right padding in the .alert class and add <button type="button" class="close" onclick="this.parentElement.style.display='none';">&times;</button> under {{ alert }} in the alert  
+and/or include <button type="button" class="close" onclick="this.parentElement.remove();">&times;</button> in the alert.innerHTML under ${message} */
+
+.alert .close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.5rem 0.75rem;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.alert .close:hover {
+    opacity: 1;
+}
+
+
+
+
+
+
+
+
+
+/* MY CUSTOM MODAL FOR FORMS */
+
+
+
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+
+
+
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 200;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: clip;
+    background-color: rgba(0, 0, 0, 0.593);
+    transition: background-color 0.5s ease;
+}
+
+.modal-content {
+    background-color: var(--theme-footer);
+    margin: 100px auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+    color: var(--theme-text)
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-input {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+
+.submit-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+}
+
+
+
+.error {
+    display: block;
+    opacity: 0;
+    color: red;
+    font-size: 0.9em;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, opacity 0.5s ease, margin-top 0.3s ease-out;
+}
+
+.error.show {
+    max-height: 50px; /* Adjust this value based on your needs */
+    margin-top: 5px;
+    opacity: 1;
+    transition: max-height 0.5s ease-out, opacity 0.5s ease, margin-top 0.3s ease-out;
+
+}
+
+.modal-submit-button:disabled {
+    background-color: #cccccc;
+    cursor:default;
+}
+
+
+
+.modal-title {
+    border-bottom: 1px solid var(--theme-code_border);
+    padding-bottom:10px;
+    margin-bottom:20px;
+}
+
+
+
+
+.modal-cancel-button {
+    height:35px;
+    font-size: 16px;
+    text-align: left;
+    border: solid 1px var(--theme-code_border);
+    border-radius: 4px;
+    background: none;
+    color: var(--theme-text); /* Text color */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    padding: 0px 10px 0px 10px;
+}
+
+.modal-cancel-button:hover {
+    border: solid 1px var(--theme-text);
+
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px; /* Adds some space above the buttons */
+}
+
+.modal-buttons button {
+    margin-left: 10px; /* Adds space between the buttons */
+}
+
+
+
+.modal-submit-button {
+    height:35px;
+    font-size: 16px;
+    text-align: left;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--theme-primary); /* Primary background color */
+    color: var(--theme-text); /* Text color */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    padding: 0px 10px 0px 10px;
+}
+
+
+
+
+/* THESE ARE FOR THE AUTOCOMPLETE FIELD STYLING */
+/* Style for input fields */
+
+
+/* Change background to red when an autocomplete option is hovered */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--theme-footer) inset !important;
+
+}
+
+/* For non-webkit browsers */
+
+
+/* Ensure text remains visible on red background */
+input:-webkit-autofill {
+    -webkit-text-fill-color: white !important;
+}
+    

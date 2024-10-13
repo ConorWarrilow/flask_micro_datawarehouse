@@ -5,12 +5,20 @@ from powerpy.posts.forms import PostForm
 from powerpy import db
 from powerpy.models import User, Post
 from flask_login import current_user, login_required
-
+import logging 
+import os
 
 # similar to app = Flask(__name__)
 posts = Blueprint('posts', __name__)
 
-
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(log_dir, 'flask_logs.log'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+route_logger = logging.getLogger('route_logger')
 
 @posts.route("/post/new", methods=['GET', 'POST'])
 @login_required

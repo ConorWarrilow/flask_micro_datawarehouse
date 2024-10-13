@@ -108,17 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 const username = document.body.dataset.username;
-
-
-
-
 // ------------ menu buttons ----------------
 
 document.addEventListener('DOMContentLoaded', function() {
     const menuDatabaseButton = document.getElementById('main-menu-home-button')
 
     menuDatabaseButton.addEventListener('click', function(){
-        window.location.href = `/${username}/home`
+        window.location.href = `/home`
     })
 })
 
@@ -150,6 +146,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuDatabaseButton = document.getElementById('main-menu-account-button')
 
     menuDatabaseButton.addEventListener('click', function(){
-        window.location.href = `/${username}/account`
+        window.location.href = `/account`
     })
 })
+
+
+
+// Not needed, but keeping incase
+//
+//popup.addEventListener('mouseenter', function() {
+//    clearTimeout(hideTimeout);
+//});
+//
+//popup.addEventListener('mouseleave', function() {
+//    hidePopupWithDelay(popup);
+//});
+//function hidePopupWithDelay(popup) {
+//hideTimeout = setTimeout(() => hidePopup(popup), 2000);
+//}
+//
+//
+
+
+
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}

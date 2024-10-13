@@ -2,214 +2,66 @@ from flask import render_template, url_for, flash, redirect, request, abort, Blu
 from powerpy.users.forms import RegistrationForm, LoginForm, UpdateAccountForm, RequestResetForm, ResetPasswordForm
 from powerpy.posts.forms import PostForm
 from powerpy.databases.forms import UpdateDatabaseForm, CreateSchemaForm, CreateSchemaForDbForm, UploadDatasetForm, CreateDatabaseForm, UpdateSchemaForm
-from powerpy.utils import Flash
+from powerpy.utils import Flash, generate_uuid
 
-from powerpy import db, bcrypt#, mail
-from powerpy.models import User, Post, Database, Schema, DataFile, Dashboard
+from powerpy import db, bcrypt
+from powerpy.models import User, Post, Database, Schema, DataFile, Dashboard, SchemaTable, Query, SavedQuery, Upload
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_dropzone import Dropzone
 from powerpy.users.utils import save_picture, send_reset_email
 import re
-import secrets # So we can generate a random hex
-import os # So we can get the file extension
-from PIL import Image # So we can resize images before saving them
+import secrets
+import os 
+from PIL import Image 
 import logging
 from werkzeug.utils import secure_filename
 import shutil
-
+import json
+from functools import wraps
+import time
+from powerpy.models import Worksheet
+from datetime import datetime, timezone
+from powerpy.databases.utils import get_query_object, SqlQueryBase
 from redis import Redis
+import duckdb
+import simplejson as sj
+import logging
 
 redis = Redis(host='localhost', port=6379, db=0)
 
-# similar to app = Flask(__name__)
 databases = Blueprint('databases', __name__)
 
 
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)  # Create the logs directory if it doesn't exist
 
+
+
+
+
+
+
+
+
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
 logging.basicConfig(
-    filename=os.path.join(log_dir, 'powerpy.log'),
-    level=logging.INFO,  # Adjust the logging level as needed (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    filename=os.path.join(log_dir, 'flask_logs.log'),
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+route_logger = logging.getLogger('route_logger')
 
 
-
-### MY FUNCTIONS ###
-
-def check_if_current_user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    if user != current_user:
-        abort(403)
-    return user
-
-
-
-
-
-
-
-
-
-
-@databases.route("/<string:username>/databases/create", methods=['GET', 'POST'])
-@login_required
-def create_database(username):
-    user = check_if_current_user(username)
-    form = CreateDatabaseForm()
-
-    if form.validate_on_submit():
-        try:
-            # Create and add the database to the session
-            database = Database(
-                database_name=form.database_name.data,
-                database_description=form.database_description.data,
-                owner=current_user
-            )
-            db.session.add(database)
-            logging.info(f"Database object created: {database}")
-            
-            # Commit to get the database ID
-            db.session.commit()
-            logging.info(f"Database committed with ID: {database.id}")
-
-            # Create the schema now that we have the database ID
-            schema = Schema(
-                name=form.default_schema.data,
-                description=form.schema_description.data,
-                database_id=database.id,
-                owner=current_user
-            )
-            db.session.add(schema)
-            logging.info(f"Schema object created: {schema}")
-
-            # Commit the schema
-            db.session.commit()
-            logging.info("Schema committed successfully.")
-            
-            Flash.success('Database and default schema created successfully')
-            return redirect(url_for('databases.view_databases', username=username))
-        
-        except Exception as e:
-            logging.error(f"Error occurred during database creation: {e}")
-            db.session.rollback()  # Roll back in case of any errors
-            Flash.danger('An error occurred while creating the database. Please try again.')
-
-    # Log form errors if validation fails
-    if form.errors:
-        logging.warning(f"Form validation errors: {form.errors}")
-
-    return render_template('create_database.html', title='Create Database', form=form)
-
-
-
-@databases.route("/<string:username>/schemas/create", methods=['GET', 'POST'])
-@login_required
-def create_schema(username):
-    user = check_if_current_user(username)
-    form = CreateSchemaForm()
-    
-    # Fetch available databases for the current user
-    form.database.choices = [(db.id, db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
-
-    if form.validate_on_submit():
-        try:
-            # Create and add schema to the session
-            schema = Schema(name=form.schema_name.data,
-                            description=form.schema_description.data,
-                            database_id=form.database.data,  # database_id from the form
-                            owner_id=current_user.id)  # Assign the current user's ID as the owner
-
-            db.session.add(schema)
-            db.session.commit()  # Commit the schema to the database
-            Flash.success('Schema Created')
-            return redirect(url_for('main.home'))
-
-        except Exception as e:
-            db.session.rollback()  # Rollback in case of any error
-            Flash.danger(f'An error occurred while creating the schema. {str(e)}')
-
-    return render_template('create_schema.html', title='Create Schema', form=form)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@databases.route("/<string:username>/databases/<int:database_id>/create-schema", methods=['GET', 'POST'])
-@login_required
-def create_schema_for_db(username, database_id):
-    user = check_if_current_user(username)
-
-    # Pass the database_id to the form during initialization
-    form = CreateSchemaForDbForm(database_id=database_id)
-
-    if form.validate_on_submit():
-        # Create a new schema with the form data
-        schema = Schema(name=form.schema_name.data,
-                        description=form.schema_description.data,
-                        database_id=database_id,  # Use the database_id from the URL
-                        owner_id=current_user.id)  # Assign the current user's ID as the owner
-
-        db.session.add(schema)
-        db.session.commit()
-        Flash.success('Schema Created')
-        page = request.args.get('page', 1, type=int)
-        total_databases = request.args.get('total_databases', 'error', type=int)
-        schemas = (Schema.query
-        .filter_by(owner=user, database_id=database_id)
-        .order_by(Schema.date_created.desc())
-        ).all()
-        
-        return redirect(url_for('databases.view_database', database_id=database_id, username=current_user.username, schemas=schemas, page=page, total_databases=total_databases)) ############# this needs changing or just get rid of some of the multiple pages functionality shit
-
-    return render_template('create_schema_for_db.html', title='Create Schema', form=form)
-
-
-## fuck this just get rid of the dumb page functionality you honestly don't even want it anyway
-
-
-# old one before I updated the base template
 #
 #
-#@databases.route("/<string:username>/databases", methods=['GET', 'POST'])
+#
+#@databases.route("/<string:username>/databases/create", methods=['GET', 'POST'])
 #@login_required
-#def view_databases(username):
-#    user = User.query.filter_by(username=username).first_or_404()
-#
-#    if user != current_user:
-#        abort(403)  # HTTP response for a forbidden route
-#
-#    page = request.args.get('page', 1, type=int)
-#    total_databases = request.args.get('total_databases', 'error', type=int)
-#    logging.info(f"total_databases_one:{total_databases}")
-#    databases = (Database.query
-#        .filter_by(owner=user)
-#        .order_by(Database.date_created.desc())
-#        .paginate(page=page, per_page=10)
-#    )
+#def create_database(username):
+#    route_logger.info("Accessed databases.create_database")
+#    if username != current_user.username: abort(403)
 #    form = CreateDatabaseForm()
 #
+#    current_app.logger.info("some flask log")
 #    if form.validate_on_submit():
 #        try:
 #            # Create and add the database to the session
@@ -250,18 +102,262 @@ def create_schema_for_db(username, database_id):
 #    # Log form errors if validation fails
 #    if form.errors:
 #        logging.warning(f"Form validation errors: {form.errors}")
+#
+#    return render_template('create_database.html', title='Create Database', form=form)
+#
+#
+#
+
+
+
+
+@databases.route("/create_database", methods=['POST'])
+@login_required
+def create_database():
+    route_logger.info("Accessed databases.create_database")
+    form_data = request.form
+    errors = {}
+
+
+    database_name = form_data['database_name']
+    default_schema = form_data['default_schema']
+
+    # Server-side validation
+    #if not form_data.get('database_name'):
+    #    errors['database_name'] = 'Database name is required.'
+
+    # Database Validation
+    if len(database_name) < 1 or len(database_name) > 30:
+        errors['database_name'] = 'Database name must be between 1 and 30 characters.'
+    elif not re.match(r'^[a-zA-Z0-9_]+$', database_name):
+        errors['database_name'] = 'Only letters, numbers, and underscores are allowed.'
+
+    if len(default_schema) < 1 or len(default_schema) > 30:
+        errors['default_schema'] = 'Schema name must be between 1 and 30 characters.'
+    elif not re.match(r'^[a-zA-Z0-9_]+$', default_schema):
+        errors['default_schema'] = 'Only letters, numbers, and underscores are allowed.'
+    try:
+
+        database = Database.query.filter_by(database_name=database_name).filter_by(owner_id = current_user.id).first()
+        if database: errors['database_name'] = f"Object '{database_name}' already exists for this account." 
+            
+    except Exception as e:
+        current_app.logger.info("there was an exception bro")
+
+    # Similar validation for other fields...
+
+    if errors:
+        return jsonify({"success": True, "errors": errors}), 400
+
+    try:
+        # Create and add the database to the session
+        database = Database(
+            database_name=database_name,
+            database_description=form_data.get('database_description', ''),
+            owner=current_user
+        )
+        db.session.add(database)
+        db.session.commit()
+
+        # Create the schema
+        schema = Schema(
+            name=default_schema,
+            description=form_data.get('schema_description', ''),
+            database_id=database.id,
+            owner=current_user
+        )
+        db.session.add(schema)
+        db.session.commit()
+        schema_path = f"uploads/{current_user.id}/{database_name}/{default_schema}"
+        os.makedirs(schema_path, exist_ok=True)
+
+
+        return jsonify({
+            "success": True,
+            "message": "Database and schema created successfully",
+            "flash_message": "Database created successfully.",
+            "flash_category": "success"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error occurred during database creation: {e}")
+        return jsonify({
+            "success": False,
+            "message": str(e),
+            "flash_message": "Error creating database.",
+            "flash_category": "error"
+        }), 500
+
+
+
+
+
+
+
+
+
+
+
+#
+#
+#
+#
+#@worksheets.route("/<username>/worksheets/<string:worksheet_code>/delete", methods=['POST'])
+#@login_required
+#def delete_worksheet(username, worksheet_code):
+#    route_logger.info(f"Accessed worksheets.delete_worksheet for user {username} and worksheet {worksheet_code}")
+#    current_app.logger.info("current app logger")
+#    if username != current_user.username:
+#        route_logger.warning(f"Unauthorized deletion attempt by {current_user.username} for {username}'s worksheet")
+#        return jsonify({"success": False, "message": "Unauthorized", "flash_message": "Unauthorized action.", "flash_category": "error"}), 403
 #    
-#    return render_template('databases.html', title='Databases',
-#                           databases=databases, user=user, page=page, form=form)
+#    worksheet = Worksheet.query.filter_by(code=worksheet_code).first()
+#    if not worksheet:
+#        route_logger.warning(f"Worksheet {worksheet_code} not found for user {username}")
+#        return jsonify({"success": False, "message": "Worksheet not found", "flash_message": "Worksheet not found.", "flash_category": "error"}), 404
+#
+#    try:
+#        db.session.delete(worksheet)
+#        db.session.commit()
+#        route_logger.info(f"Worksheet {worksheet_code} deleted successfully for user {username}")
+#        return jsonify({
+#            "success": True, 
+#            "message": "Worksheet deleted successfully",
+#            "flash_message": "Successfully Deleted.",
+#            "flash_category": "success"
+#        }), 200
+#    except Exception as e:
+#        db.session.rollback()
+#        route_logger.error(f"Error deleting worksheet {worksheet_code} for user {username}: {str(e)}")
+#        return jsonify({
+#            "success": False, 
+#            "message": "Error deleting worksheet",
+#            "flash_message": "Error deleting worksheet.",
+#            "flash_category": "error"
+#        }), 500
 #
 #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@databases.route("/<string:username>/schemas/create", methods=['GET', 'POST'])
+@login_required
+def create_schema(username):
+    if username != current_user.username: abort(403)
+    form = CreateSchemaForm()
+    
+    # Fetch available databases for the current user
+    form.database.choices = [(db.id, db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
+
+    if form.validate_on_submit():
+        try:
+            # Create and add schema to the session
+            schema = Schema(name=form.schema_name.data,
+                            description=form.schema_description.data,
+                            database_id=form.database.data,  # database_id from the form
+                            owner_id=current_user.id)  # Assign the current user's ID as the owner
+
+            db.session.add(schema)
+            db.session.commit()  # Commit the schema to the database
+
+
+            selected_database = Database.query.get_or_404(form.database.data)
+            schema_path = f"uploads/{current_user.id}/{selected_database.database_name}/{form.schema_name.data}"
+            os.makedirs(schema_path, exist_ok=True)
+            Flash.success('Schema Created')
+            return redirect(url_for('main.home'))
+
+        except Exception as e:
+            db.session.rollback()  # Rollback in case of any error
+            Flash.danger(f'An error occurred while creating the schema. {str(e)}')
+
+    return render_template('create_schema.html', title='Create Schema', form=form)
+
+
+
+
+
+
+
+
+
+
+@databases.route("/<string:username>/databases/<int:database_id>/create-schema", methods=['GET', 'POST'])
+@login_required
+def create_schema_for_db(username, database_id):
+    if username != current_user.username: abort(403)
+
+    # Pass the database_id to the form during initialization
+    form = CreateSchemaForDbForm(database_id=database_id)
+
+    if form.validate_on_submit():
+        # Create a new schema with the form data
+        schema = Schema(name=form.schema_name.data,
+                        description=form.schema_description.data,
+                        database_id=database_id,  # Use the database_id from the URL
+                        owner_id=current_user.id)  # Assign the current user's ID as the owner
+        
+        db.session.add(schema)
+        db.session.commit()
+
+        database = Database.query.get_or_404(database_id)
+
+
+        schema_path = f"uploads/{current_user.id}/{database.database_name}/{form.schema_name.data}"
+        os.makedirs(schema_path, exist_ok=True)
+
+        Flash.success('Schema Created')
+        page = request.args.get('page', 1, type=int)
+        total_databases = request.args.get('total_databases', 'error', type=int)
+        schemas = (Schema.query
+        .filter_by(owner=current_user, database_id=database_id)
+        .order_by(Schema.date_created.desc())
+        ).all()
+        
+        return redirect(url_for('databases.view_database', database_id=database_id, username=current_user.username, schemas=schemas, page=page, total_databases=total_databases)) ############# this needs changing or just get rid of some of the multiple pages functionality shit
+
+    return render_template('create_schema_for_db.html', title='Create Schema', form=form)
+
 
 
 
 @databases.route("/<string:username>/databases/<int:database_id>", methods=['GET', 'POST'])
 @login_required
 def view_database(username, database_id):
-    user = check_if_current_user(username)
+    if username != current_user.username: abort(403)
 
 
     page = request.args.get('page', 1, type=int)
@@ -272,7 +368,7 @@ def view_database(username, database_id):
     logging.info(f"total_databases_two:{total_databases}")
     database = Database.query.get_or_404(database_id) # If it doesn't exist, return a 404
     schemas = (Schema.query
-        .filter_by(owner=user, database_id=database.id)
+        .filter_by(owner=current_user, database_id=database.id)
         .order_by(Schema.date_created.desc())
         ).all()
 
@@ -318,9 +414,9 @@ def delete_database(username, database_id):
         schemas = Schema.query.filter_by(database_id=database_id).all()
         for schema in schemas:
             db.session.delete(schema)
-        datafiles = DataFile.query.filter_by(database_id=database_id).all()
-        for datafile in datafiles:
-            db.session.delete(datafile)
+        tables = SchemaTable.query.filter_by(database_id=database_id).all()
+        for table in tables:
+            db.session.delete(table)
         db.session.commit()
         logging.info(f"Successfully deleted database {database_id} and related entries")
     except Exception as e:
@@ -382,9 +478,9 @@ def delete_schema(username, database_id, schema_id):
     try:
         schema = Schema.query.get_or_404(schema_id)
         db.session.delete(schema)
-        datafiles = DataFile.query.filter_by(schema_id=schema_id).all()
-        for datafile in datafiles:
-            db.session.delete(datafile)
+        tables = SchemaTable.query.filter_by(schema_id=schema_id).all()
+        for table in tables:
+            db.session.delete(table)
         db.session.commit()
         logging.info(f"Successfully deleted schema {schema_id} and related data files")
     except Exception as e:
@@ -410,18 +506,6 @@ def delete_schema(username, database_id, schema_id):
                             database_id=database_id,
                             title = 'Delete Schema',
                             legend = 'Delete Schema'))
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -462,49 +546,6 @@ def update_database(username, database_id):
 
     return render_template('update_database.html', title='Update Database',
                            form=form, legend='Update Database', username=username)
-
-
-
-
-
-
-
-
-#@databases.route("/<username>/databases/<int:database_id>/<int:schema_id>/update", methods=['GET', 'POST'])
-#@login_required
-#def update_schema(username, database_id, schema_id):
-#
-#
-#    schema = Schema.query.get_or_404(schema_id)
-#    if schema.owner != current_user:
-#            abort(403)  
-#
-#
-#    # This line obtains the data for the specific post
-#    form = UpdateSchemaForm()
-#    if form.validate_on_submit():
-#
-#        if form.schema_name.data == schema.name and form.schema_description.data == schema.description:
-#            Flash.info('No Changes made.')
-#            return redirect(url_for('databases.view_database', database_id=database_id, username=username))
-#
-#
-#        schema.name = form.schema_name.data
-#        schema.description = form.schema_description.data
-#        db.session.commit()
-#        Flash.success('Your schema has been updated.')
-#        return redirect(url_for('databases.view_database', database_id=database_id, username=username))
-#    
-#    elif request.method == 'GET':
-#        form.schema_name.data = schema.name
-#        form.schema_description.data = schema.description
-#
-#    return render_template('update_schema.html', title='Update Schema',
-#                           form=form, legend='Update Schema', username=username)
-
-
-
-
 
 
 
@@ -550,726 +591,458 @@ def update_schema(username, database_id, schema_id):
 
 
 
-
-
-
-
-
-#@databases.route("/add-data", methods=['GET', 'POST'])
-#def add_data():
-#    form = UploadDatasetForm()
-#
-#    if form.validate_on_submit():
-#        file = form.file.data
-#        # Save the file or process it as needed
-#        os.makedirs(f"uploads/{current_user.username}", exist_ok=True)
-#        file.save(os.path.join('uploads', current_user.username, file.filename))
-#        flash('File successfully uploaded!', 'success')
-#        
-#        return redirect(url_for('main.home'))
-#    
-#    return render_template('add_data.html', title='Create Database', form = form)
-
-
-# multiple files
-##users.route("/add-data", methods=['GET', 'POST'])
-#def add_data():
-#   form = UploadDatasetForm()
-#
-#   if form.validate_on_submit():
-#       files = form.files.data  # This will be a list of FileStorage objects
-#       
-#       os.makedirs(f"uploads/{current_user.username}", exist_ok=True)
-#
-#       for file in files:
-#           # Save each file
-#           file.save(os.path.join('uploads', current_user.username, file.filename))
-#       
-#       flash('Files successfully uploaded!', 'success')
-#       return redirect(url_for('main.home'))
-#   
-#   return render_template('add_data.html', title='Create Database', form=form)
-#<form method="POST" enctype="multipart/form-data">
-#    {{ form.hidden_tag() }}
-#    <div class="form-group">
-#        {{ form.files.label(class="form-label") }}
-#        {{ form.files(class="form-control", multiple=True) }}
-#    </div>
-#    <div class="form-group">
-#        {{ form.submit(class="btn btn-primary") }}
-#    </div>
-#</form>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#@databases.route("/schemas/<int:database_id>", methods=['GET'])
-#@login_required
-#def get_schemas(database_id):
-#    database = Database.query.get_or_404(database_id)
-#    if database.owner != current_user:
-#        abort(403)
-#
-#    schemas = Schema.query.filter_by(database_id=database_id).all()
-#    return jsonify([(schema.id, schema.name) for schema in schemas])
-#
-#
-#
-#
-#@databases.route("/upload", methods=['GET', 'POST'])
-#@login_required
-#def upload():
-#    form = UploadDatasetForm()
-#    form.database.choices = [(db.id, db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
-#
-#    if form.validate_on_submit():
-#        files = form.files.data
-#        logging.info(f"files: {files}")
-#        database_id = form.database.data
-#        logging.info(f"files: {database_id}")
-#        schema_id = form.schema.data
-#        logging.info(f"files: {schema_id}")
-#        schema_path = f"uploads/{current_user.id}/{database_id}/{schema_id}"
-#        os.makedirs(schema_path, exist_ok=True)
-#
-#
-#        for file in files: 
-#            filename = secure_filename(file.filename)
-#            file_path = os.path.join(schema_path, filename)
-#            file.save(file_path)
-#
-#
-#        Flash.success('Data Successfully Uploaded.')
-#        return redirect(url_for('main.home'))
-#
-#    return render_template('upload.html', form=form)
-
-
-
-        #file = form.file.data
-        #database_id = form.database.data
-
-        # Save the uploaded file
-        #filename = secure_filename(file.filename)
-        #file_path = os.path.join(current_app.root_path, 'uploads', filename)
-        #file.save(file_path)
-
-        # Perform operations with the uploaded file and the selected database
-
-
-
-
-
-#@databases.route("/upload", methods=['GET', 'POST'])
-#@login_required
-#def upload():
-#    form = UploadDatasetForm()
-#    
-#    # Set choices for the database field
-#    form.database.choices = [(db.id, db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
-#    
-#    # Set initial choices for the schema field with a default option
-#    form.schema.choices = [('', 'Select Schema')]
-#
-#    if form.validate_on_submit():
-#        try:
-#            files = form.files.data
-#            database_id = form.database.data
-#            schema_id = form.schema.data
-#            
-#            logging.info(f"Processing upload for user {current_user.id}, database {database_id}, schema {schema_id}")
-#            
-#            schema_path = f"uploads/{current_user.id}/{database_id}/{schema_id}"
-#            os.makedirs(schema_path, exist_ok=True)
-#            
-#            for file in files:
-#                filename = secure_filename(file.filename)
-#                file_path = os.path.join(schema_path, filename)
-#                file.save(file_path)
-#                logging.info(f"Saved file: {file_path}")
-#            
-#            flash('Data Successfully Uploaded.', 'success')
-#            return redirect(url_for('main.home'))
-#        except Exception as e:
-#            logging.error(f"Error during file upload: {str(e)}")
-#            flash('An error occurred during upload. Please try again.', 'danger')
-#
-#    return render_template('upload.html', form=form)
-
-
-
-
-
-
-
-## original upload incase I need to go back to it
-#@databases.route("/upload", methods=['GET', 'POST'])
-#@login_required
-#def upload():
-#    form = UploadDatasetForm()
-#    form.database.choices = [(db.id, db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
-#
-#    if form.validate_on_submit():
-#        files = form.files.data
-#        logging.info(f"files: {files}")
-#        database_id = form.database.data
-#
-#        database_path = f"uploads/{current_user.id}/{database_id}"
-#        os.makedirs(database_path, exist_ok=True)
-#
-#
-#        for file in files: 
-#            filename = secure_filename(file.filename)
-#            file_path = os.path.join(database_path, filename)
-#            file.save(file_path)
-#
-#
-#        Flash.success('Data Successfully Uploaded.')
-#        return redirect(url_for('users.upload'))
-#
-#    return render_template('upload.html', form=form)
-
-
-
-
-#@databases.route("/upload", methods=['GET', 'POST'])
-#@login_required
-#def upload():
-#    form = UploadDatasetForm()
-#    
-#    # Set choices for the database field
-#    form.database.choices = [(str(db.id), db.database_name) for db in Database.query.filter_by(owner=current_user).all()]
-#    
-#    if form.validate_on_submit():
-#        try:
-#            files = form.files.data
-#            database_id = form.database.data
-#            schema_id = form.schema.data
-#            
-#            logging.info(f"Processing upload for user {current_user.id}, database {database_id}, schema {schema_id}")
-#            
-#            schema_path = f"uploads/{current_user.id}/{database_id}/{schema_id}"
-#            os.makedirs(schema_path, exist_ok=True)
-#            
-#            for file in files:
-#                filename = secure_filename(file.filename)
-#                file_path = os.path.join(schema_path, filename)
-#                file.save(file_path)
-#                logging.info(f"Saved file: {file_path}")
-#            
-#            flash('Data Successfully Uploaded.', 'success')
-#            return redirect(url_for('main.home'))
-#        except Exception as e:
-#            logging.error(f"Error during file upload: {str(e)}")
-#            flash('An error occurred during upload. Please try again.', 'danger')
-#
-#    return render_template('upload.html', form=form)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#original for id probably need it back
-
-#@databases.route("/schemas/<int:database_id>", methods=['GET'])
-#@login_required
-#def get_schemas(database_id):
-#    database = Database.query.get_or_404(database_id)
-#    if database.owner != current_user:
-#        abort(403)
-#    
-#    schemas = Schema.query.filter_by(database_id=database_id).all()
-#    return jsonify([(str(schema.id), schema.name) for schema in schemas])
-
+import os
+import logging
+from werkzeug.utils import secure_filename
 import duckdb
-
+import shutil
 
 @databases.route("/upload", methods=['GET', 'POST'])
 @login_required
 def upload():
     form = UploadDatasetForm()
-    
+   
     # Set choices for the database field, keeping the default option
     db_choices = [('', 'Select Database')]
     db_choices.extend([(str(db.id), db.database_name) for db in Database.query.filter_by(owner=current_user).all()])
     form.database.choices = db_choices
-    
+   
     if form.validate_on_submit():
         try:
             files = form.files.data
             database_id = form.database.data
             schema_id = form.schema.data
-
+           
             # Fetch the database and schema names
             database = Database.query.get(database_id)
             schema = Schema.query.get(schema_id)
-
             if not database or not schema:
                 flash('Invalid database or schema selected.', 'danger')
                 return redirect(url_for('databases.upload'))
-
-            database_name = secure_filename(database.database_name)
-            schema_name = secure_filename(schema.name)
-
-            logging.info(f"Processing upload for user {current_user.id}, database {database_name}, schema {schema_name}")
-
-            schema_path = f"uploads/{current_user.id}/{database_name}/{schema_name}"
+            
+            schema_path = f"uploads/{current_user.id}/{database.database_name}/{schema.name}"
+            logging.info(f"schema_path: {schema_path}")
             os.makedirs(schema_path, exist_ok=True)
-
+            
             for file in files:
-                filename = secure_filename(file.filename)
-                new_filename = filename.replace('-', '_')
-                datafile = DataFile(filename=new_filename.rsplit('.', 1)[0],
-                                    database_id=database_id,
-                                    schema_id=schema_id,
-                                    owner_id=current_user.id)
-                db.session.add(datafile)
-                db.session.commit()
-
-                # Load file contents using DuckDB
-                file_path = os.path.join(schema_path, filename)
-
-                # Assuming it's a CSV file. You can adjust based on the file type.
-                with open(file_path, 'wb') as f:
-                    f.write(file.read())  # Save file temporarily
-
-                # Use DuckDB to read the file and convert to Parquet
-                parquet_file_path = os.path.join(schema_path, f"{new_filename.rsplit('.', 1)[0]}.parquet")
-
-                # DuckDB query to read and save as Parquet
-
-                duckdb.query(f"""
-                    COPY (SELECT * FROM read_csv_auto('{file_path}'))
-                    TO '{parquet_file_path}' (FORMAT PARQUET)
-                """)
-
-                # Optionally delete the temporary CSV file after conversion
-                os.remove(file_path)
+                new_filename = secure_filename(file.filename).replace('-', '_')
+                table_name = new_filename.rsplit('.', 1)[0]
+                file_path = os.path.join(schema_path, new_filename)
+                logging.info(f"file path: {file_path}")
+                # Save file using a method that ensures the file is closed
+                file.save(file_path)
+               
+                conn = None
+                try:
+                    with duckdb.connect(f"uploads/{current_user.id}/{database.database_name}.db") as conn:
+            
+                        conn.execute(f"USE {schema.name}")
+                        conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM read_csv_auto('{file_path}', all_varchar=1)")
+                        conn.close()
+                    
+                    table = SchemaTable(database_id=database_id,
+                                        schema_id=schema_id,
+                                        name=table_name,
+                                        table_columns="temptemp",
+                                        owner_id=current_user.id)
+                    db.session.add(table)
+                    db.session.commit()
+                except Exception as e:
+                    logging.error(f"Error processing file {new_filename}: {str(e)}")
+                    flash(f'Error processing file {new_filename}. Please try again.', 'danger')
+                    db.session.rollback()
+                finally:
+                    if conn:
+                        conn.close()
+                    if os.path.exists(file_path):
+                        try:
+                            os.remove(file_path)
+                        except PermissionError:
+                            logging.warning(f"Unable to remove file {file_path}. It may be in use.")
             
             flash('Data Successfully Uploaded.', 'success')
             return redirect(url_for('main.home'))
+        
         except Exception as e:
-            logging.error(f"Error during file upload: {str(e)}")
-            flash('An error occurred during upload. Please try again.', 'danger')
-    
+            logging.error(f"Error during file upload process: {str(e)}")
+            flash('An error occurred during the upload process. Please try again.', 'danger')
+   
     return render_template('upload.html', form=form)
 
 
 
+import pandas as pd
 
 
-
-
-
-
-
-
-
-
-
-
-@databases.route("/redis", methods=['GET', 'POST'])
-def hello():
-    redis.incr('hits')
-    return f"This page has been viewed {redis.get('hits').decode('utf-8')} time(s)"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#from flask import Flask, request, jsonify
-#from redis import Redis
-import json
-from functools import wraps
-import time
-#
-#app = Flask(__name__)
-#redis = Redis(host='localhost', port=6379, db=0)
-#
-## 1. Caching
-#def cache(expire_time=300):
-#    def decorator(f):
-#        @wraps(f)
-#        def decorated_function(*args, **kwargs):
-#            cache_key = f"cache:{request.path}:{request.query_string}"
-#            result = redis.get(cache_key)
-#            if result:
-#                return json.loads(result)
-#            result = f(*args, **kwargs)
-#            redis.setex(cache_key, expire_time, json.dumps(result))
-#            return result
-#        return decorated_function
-#    return decorator
-#
-#@app.route('/api/expensive-operation')
-#@cache(expire_time=60)
-#def expensive_operation():
-#    time.sleep(2)  # Simulate expensive operation
-#    return {"result": "This is an expensive operation"}
-#
-## 2. Session Storage
-#from flask_session import Session
-#app.config['SESSION_TYPE'] = 'redis'
-#app.config['SESSION_REDIS'] = redis
-#Session(app)
-#
-#@app.route('/api/session-example')
-#def session_example():
-#    if 'visits' in session:
-#        session['visits'] = session.get('visits') + 1
-#    else:
-#        session['visits'] = 1
-#    return f"You have visited this page {session['visits']} times."
-#
-## 3. Rate Limiting
-#def rate_limit(limit=10, per=60):
-#    def decorator(f):
-#        @wraps(f)
-#        def decorated_function(*args, **kwargs):
-#            key = f"rate_limit:{request.remote_addr}:{request.path}"
-#            current = redis.get(key)
-#            if current is not None and int(current) > limit:
-#                return jsonify({"error": "Rate limit exceeded"}), 429
-#            pipe = redis.pipeline()
-#            pipe.incr(key)
-#            pipe.expire(key, per)
-#            pipe.execute()
-#            return f(*args, **kwargs)
-#        return decorated_function
-#    return decorator
-#
-#@app.route('/api/rate-limited')
-#@rate_limit(limit=5, per=60)
-#def rate_limited():
-#    return "This is a rate-limited endpoint"
-#
-## 4. Job Queue
-#from rq import Queue
-#from rq.job import Job
-#
-#q = Queue(connection=redis)
-#
-#def background_task(x, y):
-#    time.sleep(5)  # Simulate long running task
-#    return x + y
-#
-#@app.route('/api/enqueue-job')
-#def enqueue_job():
-#    job = q.enqueue(background_task, 3, 4)
-#    return jsonify({"job_id": job.id})
-#
-#@app.route('/api/job-result/<job_id>')
-#def get_job_result(job_id):
-#    job = Job.fetch(job_id, connection=redis)
-#    if job.is_finished:
-#        return jsonify({"result": job.result})
-#    else:
-#        return jsonify({"status": "pending"})
-#
-## 5. Pub/Sub for Real-time Updates
-#import threading
-#
-#def message_handler():
-#    pubsub = redis.pubsub()
-#    pubsub.subscribe('updates')
-#    for message in pubsub.listen():
-#        if message['type'] == 'message':
-#            print(f"Received: {message['data']}")
-#
-#@app.route('/api/publish-update')
-#def publish_update():
-#    redis.publish('updates', 'This is a real-time update')
-#    return "Update published"
-#
-## Start the message handler in a separate thread
-#threading.Thread(target=message_handler, daemon=True).start()
-#
-#if __name__ == '__main__':
-#    app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def cache(expire_time=300):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            cache_key = f"cache:{request.path}:{request.query_string}"
-            result = redis.get(cache_key)
-            if result:
-                return json.loads(result)
-            result = f(*args, **kwargs)
-            redis.setex(cache_key, expire_time, json.dumps(result))
-            return result
-        return decorated_function
-    return decorator
-
-def get_weather_data(city):
-    # Simulate an API call with a delay
-    time.sleep(2)
-    # In a real scenario, you would make an actual API call here
-    return {
-        "city": city,
-        "temperature": 22,
-        "condition": "Sunny"
-    }
-
-@databases.route('/weather/<city>')
-@cache(expire_time=60)  # Cache for 1 minute
-def weather(city):
-    start_time = time.time()
-    weather_data = get_weather_data(city)
-    end_time = time.time()
-    
-    response_time = round(end_time - start_time, 2)
-    
-    return render_template('weather.html', 
-                           weather=weather_data, 
-                           response_time=response_time)
-
-
-
-
-
-
-
-from powerpy.utils import GigaDuck
-
-
-
-
-#original 
-
-#@databases.route("/databases", methods=['GET'])
-#@login_required
-#def get_databases():
-#    databases = Database.query.filter_by(owner=current_user).all()
-#    return jsonify([(str(db.id), db.database_name) for db in databases])
-
-
-
-
-
-
-
-
-#@databases.route("/<string:username>/editor", methods=['GET'])
-#@login_required
-#def editor_query(username):
-#    if username != current_user.username:
-#        abort(403)
-#    default_db = request.args.get('selected_database', type=str)
-#    default_schema = request.args.get('selected_schema', type=str)
-#    query = request.args.get('query', type=str)
-#    gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=default_db, default_schema=default_schema)
-#    QUERY = f"""{query}"""
-#    result = gigaduck.query(QUERY).fetch_df_chunk()
-
-
-
-
-
-# original
 
 #@databases.route("/editor", methods=['GET'])
 #@login_required
 #def editor_query():
-#    default_db = request.args.get('selected_database', type=str)
-#    default_schema = request.args.get('selected_schema', type=str)
+#    route_logger.info("Accessed databases.editor_query")
+#    start_time = datetime.now()
+#    selected_database_name = request.args.get('selected_database', type=str)
+#    selected_schema_name = request.args.get('selected_schema', type=str)
 #    query = request.args.get('query', type=str)
 #    
-#    current_app.logger.info(f"Received query: {query}")
-#    current_app.logger.info(f"Selected database: {default_db}")
-#    current_app.logger.info(f"Selected schema: {default_schema}")
+#    #current_app.logger.info(f"Received query: {query}")
+#    #current_app.logger.info(f"Selected database: {selected_database_name}")
+#    #current_app.logger.info(f"Selected schema: {selected_schema_name}")
+#    
 #
-#    database_name = Database.query.get_or_404(default_db)
-#    schema_name = Database.query.get_or_404(default_schema)
-#
-#    current_app.logger.info(f"Received query: {query}")
-#    current_app.logger.info(f"Selected databaseafterrrrrrrrrr: {database_name}")
-#    current_app.logger.info(f"Selected schema afterrrrrrrrrrrrr: {schema_name}")
 #
 #    try:
-#        gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database_name.database_name, default_schema=schema_name.name)
-#        result = gigaduck.query(query).fetch_df_chunk()
-#        response_data = {
-#            'columns': result.columns.tolist(),
-#            'data': result.values.tolist()
-#        }
-#        current_app.logger.info(f"Query result: {response_data}")
-#        return jsonify(response_data)
+#        if selected_database_name != 'SAMPLE_DATA':
+#            print("what")
+#            # Find the database by name
+#            database = Database.query.filter_by(owner=current_user, database_name=selected_database_name).first()
+#            if not database:
+#                return jsonify({'error': 'Database not found', 'type': 'error'}), 404
+#
+#            # Find the schema by name
+#            schema = Schema.query.filter_by(database_id=database.id, name=selected_schema_name).first()
+#            if not schema:
+#                return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
+#
+#            gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database.database_name, default_schema=schema.name)
+#
+#        elif selected_database_name == 'SAMPLE_DATA':
+#            print("1")
+#            database = Database.query.get(1)
+#            schema = Schema.query.filter_by(database_id=1, name=selected_schema_name).first()
+#            if not schema:
+#                return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
+#            gigaduck = GigaDuck(database=':memory:', user_id=3, default_db=database.database_name, default_schema=schema.name)
+#            print("2")
+#
+#
+#
+#
+#
+#        result, status_code = gigaduck.query(query)
+#        print("3")
+#        if isinstance(result, Response):
+#            # If it's a Response object, it's likely a success message
+#            response_data = result.get_json()
+#            if 'success' in response_data:
+#                return jsonify({'message': response_data['success'], 'type': 'success'}), status_code
+#            elif 'warning' in response_data:
+#                return jsonify({'message': response_data['warning'], 'type': 'warning'}), status_code
+#            elif 'fail' in response_data:
+#                return jsonify({'message': response_data['fail'], 'type': 'fail'}), status_code
+#            
+#        elif isinstance(result, pd.DataFrame):
+#            for column in result.select_dtypes(include=['datetime64']):
+#                result[column] = result[column].astype(str)  # Convert to ISO 8601 string
+#            response_data = {
+#                'type': 'table',
+#                'columns': result.columns.tolist(),
+#                'data': result.values.tolist()
+#            }
+#            return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
+#        else:
+#            return jsonify({'error': 'Unexpected result type', 'type': 'error'}), 400
+#
 #    except Exception as e:
-#        current_app.logger.error(f"Error executing query: {str(e)}")
-#        return jsonify({'error': str(e)}), 400
+#        error_message = str(e)
+#
+#            # Check if the error message contains the specific pattern
+#        if 'match the pattern' in error_message:
+#            #current_app.logger.error(f"Error executing query (real error): {error_message}")
+#            # Extract table name from the error message using regex
+#            # This regex captures the word just before '.parquet' after the last '/'
+#            match = re.search(r'/([^/]+)\.parquet"', error_message)
+#            if match:
+#                table = match.group(1)  # Extracted table name
+#            else:
+#                table = "unknown table"  # Default if table name couldn't be extracted
+#            return jsonify({'error': f"Unable to find '{table}' table in the specified location."}), 400
+#        elif str("'NoneType' object has no attribute") in error_message:
+#            return jsonify({'error': "Empty Query"}), 400
+#        else:
+#            #current_app.logger.error(f"Error executing query: {error_message}")
+#            return jsonify({'error': error_message}), 400
 
 
 
 
-
-
-
-
-
-
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-import simplejson as sj
-
-
-
-#limiter = Limiter(
-#    get_remote_address,
-#    app=current_app,
-#    storage_uri='redis://localhost:6379/0'
-#)
 
 
 
 @databases.route("/editor", methods=['GET'])
-#@limiter.limit("5 per minute")
 @login_required
 def editor_query():
-    start_time = datetime.now()
-    selected_database_name = request.args.get('selected_database', type=str)
-    selected_schema_name = request.args.get('selected_schema', type=str)
+    route_logger.info("Accessed databases.editor_query")
+    print("QUERY RECIEVED")
+    print(f"current user id: {current_user.id}")
+    database_id = request.args.get('db_id', type=int)
+    database_name = request.args.get('db_name', type=str)
+    print(database_id)
+    print(database_name)
+
+    #if database_id == None:
+    #    with duckdb.connect() as conn:
+            
+
+
+
+    schema_id = request.args.get('schema_id', type=int)
+    schema_name = request.args.get('schema_name', type=str)
+    print(schema_id)
+    print(schema_name)
+
+
+
     query = request.args.get('query', type=str)
-    
-    current_app.logger.info(f"Received query: {query}")
-    current_app.logger.info(f"Selected database: {selected_database_name}")
-    current_app.logger.info(f"Selected schema: {selected_schema_name}")
-    
+    print(f"THE QUERY IS: {query}")
+    available_databases = Database.query.filter_by(owner = current_user).all()
+    print(available_databases)
+    databases = {}
+    for database in available_databases:
+        databases[database.database_name] = database.id
+    print(databases)
+    default_database = Database.query.get_or_404(database_id)
+    if default_database:
+        default_schema = Schema.query.get_or_404(schema_id)
+    else: 
+        default_schema = None
+
+
     try:
-        # Find the database by name
-        database = Database.query.filter_by(owner=current_user, database_name=selected_database_name).first()
-        if not database:
-            return jsonify({'error': 'Database not found'}), 404
-
-        # Find the schema by name
-        schema = Schema.query.filter_by(database_id=database.id, name=selected_schema_name).first()
-        if not schema:
-            return jsonify({'error': 'Schema not found'}), 404
-
-        gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database.database_name, default_schema=schema.name)
-        result = gigaduck.query(query).fetchdf()
-
-        for column in result.select_dtypes(include=['datetime64']):
-            result[column] = result[column].astype(str)  # Convert to ISO 8601 string
-        response_data = {
-            'columns': result.columns.tolist(),
-            'data': result.values.tolist()
-        }
-        #current_app.logger.info(f"Query result: {response_data}")
-
-        return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
-    except Exception as e:
-        error_message = str(e)
-
-        # Check if the error message contains the specific pattern
-        if 'match the pattern' in error_message:
-            current_app.logger.error(f"Error executing query (real error): {error_message}")
-
-            # Extract table name from the error message using regex
-            # This regex captures the word just before '.parquet' after the last '/'
-            match = re.search(r'/([^/]+)\.parquet"', error_message)
-            if match:
-                table = match.group(1)  # Extracted table name
-            else:
-                table = "unknown table"  # Default if table name couldn't be extracted
-
-            return jsonify({'error': f"Unable to find '{table}' table in the specified location."}), 400
-        
-        elif str("'NoneType' object has no attribute") in error_message:
-            return jsonify({'error': "Empty Query"}), 400
-        else:
-            current_app.logger.error(f"Error executing query: {error_message}")
-            return jsonify({'error': error_message}), 400
-    finally:
-        end_time = datetime.now()
-        duration = (end_time - start_time).total_seconds() + 5.0  # Compute duration in seconds
-    
-        # Ensure current_user is loaded from the database
-        user = User.query.get(current_user.id)
-        if user:
-            user.compute_usage += duration
-            db.session.add(user)
+        query_object = get_query_object(query, current_user.id, default_db = default_database, default_schema = default_schema)
+        if isinstance(query_object, dict):
+            print(query_object['output'])
+            query_string = Query(code=generate_uuid(16), content=query, owner_id=current_user.id, status='failed')
+            db.session.add(query_string)
             db.session.commit()
+            results =  {
+            "status": {
+                "code": 200,
+                "message": "instant fail",
+                "type": "unsuccessful"
+            },
+            "data": {
+                "type": "message",
+                "contents": str(query_object['output'])
+            }
+        }
+            return Response(sj.dumps(results, ignore_nan=True), mimetype='application/json')
+        else:
+            results = query_object.execute_query()
+    except ValueError as e:
+        query_string = Query(code=generate_uuid(16), content=query, owner_id=current_user.id, status='failed')
+        db.session.add(query_string)
+        db.session.commit()
+        results =  {
+            "status": {
+                "code": 200,
+                "message": "instant fail",
+                "type": "unsuccessful"
+            },
+            "data": {
+                "type": "message",
+                "contents": f"{str(e)} - sfdjk345hj2342jhf"
+            }
+        }
+        return Response(sj.dumps(results, ignore_nan=True), mimetype='application/json')
+
+    if results['status']['type'] != 'success':
+        query_string = Query(code=generate_uuid(16), content=query, owner_id=current_user.id, status='failed')
+    else:
+        query_string = Query(code=generate_uuid(16), content=query, owner_id=current_user.id, status='success')
+    db.session.add(query_string)
+    db.session.commit()
+        
+    return Response(sj.dumps(results, ignore_nan=True), mimetype='application/json')
+
+
+
+
+
+        #return {
+        #    "status": {
+        #        "code": 200,
+        #        "message": "instant fail",
+        #        "type": "unsuccessful"
+        #    },
+        #    "data": {
+        #        "type": "message",
+        #        "contents": "Woops, something went wrong... Try refreshing and then retry!"
+        #    }
+        #}
+
+    #id = db.Column(db.Integer, primary_key=True)
+    #code = db.Column(db.String(16), nullable=False)
+    #content = db.Column(db.Text, nullable=False)
+    #date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    #owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # message + type
+
+    # type + columns + data
+
+    # status (code/type/message) + data(type/contents)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #result = transform_query(query, user_id= current_user.id, default_db='yoyo', default_schema='yeet')
+#
+    #if result['output_type'] == "query":
+#
+#
+    #    print(f" query to execute: {result['query']}")
+    #    print(f" all the databases: {result['all_databases']}")
+    #    extra_databases = [database for database in result['all_databases'] if database != selected_database_name]
+    #    print(f"extra dbs: {extra_databases}")
+    #    try:
+    #        conn = duckdb.connect(f"uploads/{current_user.id}/yoyo.db") ###### jsut putting yoyo2 for now since we haven't properly created any databases yet
+    #        for database in extra_databases:
+    #            print(f"attaching database: {database}")
+    #            conn.execute(f"ATTACH 'uploads/{current_user.id}/{str(database)}.db' AS {str(database)}")
+    #        query_result = conn.execute(result['query']).fetchdf()
+    #        conn.close()
+    #    except Exception as e:
+    #        print(e)
+    #        conn.close()
+    #    print(result)
+    #    del conn
+    #    if isinstance(result, pd.DataFrame):
+    #        
+    #        for column in result.select_dtypes(include=['datetime64']):
+    #            result[column] = result[column].astype(str)  # Convert to ISO 8601 string
+    #        response_data = {
+    #            'type': 'table',
+    #            'columns': result.columns.tolist(),
+    #            'data': result.values.tolist()
+    #        }
+    #        return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
+    #    else: 
+    #        return jsonify({'message': result['query'], 'type': 'success'}), 200
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+    #try:
+    #    if selected_database_name != 'SAMPLE_DATA':
+#
+    #        # Find the database by name
+    #        database = Database.query.filter_by(owner=current_user, database_name=selected_database_name).first()
+    #        if not database:
+    #            return jsonify({'error': 'Database not found', 'type': 'error'}), 404
+#
+    #        # Find the schema by name
+    #        schema = Schema.query.filter_by(database_id=database.id, name=selected_schema_name).first()
+    #        if not schema:
+    #            return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
+#
+    #        gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database.database_name, default_schema=schema.name)
+#
+    #    elif selected_database_name == 'SAMPLE_DATA':
+    #        print("1")
+    #        database = Database.query.get(1)
+    #        schema = Schema.query.filter_by(database_id=1, name=selected_schema_name).first()
+    #        if not schema:
+    #            return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
+    #        gigaduck = GigaDuck(database=':memory:', user_id=3, default_db=database.database_name, default_schema=schema.name)
+    #        print("2")
+#
+#
+#
+#
+#
+    #    result, status_code = gigaduck.query(query)
+    #    print("3")
+    #    if isinstance(result, Response):
+    #        # If it's a Response object, it's likely a success message
+    #        response_data = result.get_json()
+    #        if 'success' in response_data:
+    #            return jsonify({'message': response_data['success'], 'type': 'success'}), status_code
+    #        elif 'warning' in response_data:
+    #            return jsonify({'message': response_data['warning'], 'type': 'warning'}), status_code
+    #        elif 'fail' in response_data:
+    #            return jsonify({'message': response_data['fail'], 'type': 'fail'}), status_code
+    #        
+    #    elif isinstance(result, pd.DataFrame):
+    #        for column in result.select_dtypes(include=['datetime64']):
+    #            result[column] = result[column].astype(str)  # Convert to ISO 8601 string
+    #        response_data = {
+    #            'type': 'table',
+    #            'columns': result.columns.tolist(),
+    #            'data': result.values.tolist()
+    #        }
+    #        return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
+    #    else:
+    #        return jsonify({'error': 'Unexpected result type', 'type': 'error'}), 400
+#
+    #except Exception as e:
+    #    error_message = str(e)
+#
+    #        # Check if the error message contains the specific pattern
+    #    if 'match the pattern' in error_message:
+    #        #current_app.logger.error(f"Error executing query (real error): {error_message}")
+    #        # Extract table name from the error message using regex
+    #        # This regex captures the word just before '.parquet' after the last '/'
+    #        match = re.search(r'/([^/]+)\.parquet"', error_message)
+    #        if match:
+    #            table = match.group(1)  # Extracted table name
+    #        else:
+    #            table = "unknown table"  # Default if table name couldn't be extracted
+    #        return jsonify({'error': f"Unable to find '{table}' table in the specified location."}), 400
+    #    elif str("'NoneType' object has no attribute") in error_message:
+    #        return jsonify({'error': "Empty Query"}), 400
+    #    else:
+    #        #current_app.logger.error(f"Error executing query: {error_message}")
+    #        return jsonify({'error': error_message}), 400
+
+
+
+
+
+
+
+
 
 
 
@@ -1279,39 +1052,26 @@ def editor_query():
 @login_required
 def get_databases():
     databases = Database.query.filter_by(owner=current_user).all()
+    global_database = Database.query.get(1)
+    databases.append(global_database)
+
     return jsonify([(str(db.id), db.database_name) for db in databases])
 
 
-#@databases.route("/schemas/<int:database_id>", methods=['GET'])
+
+#@databases.route("/<username>/datafiles", methods=['GET'])
 #@login_required
-#def get_schemas(database_id):
-#    database = Database.query.get_or_404(database_id)
-#    if database.owner != current_user:
-#        abort(403)
-#    
-#    schemas = Schema.query.filter_by(database_id=database_id).all()
-#    return jsonify([(str(schema.id), schema.name) for schema in schemas])
+#def get_datafiles(username):
+#    datafiles = Upload.query.filter_by(owner_id=current_user.id).all()
+#
+#    print(datafiles)
+#    for file in datafiles:
+#        print(file.filename)
+#        print(file.id)
 #
 #
-#@databases.route("/schemas/<int:schema_id>/datafiles", methods=['GET'])
-#@login_required
-#def get_datafiles(schema_id):
-#    schema = Schema.query.get_or_404(schema_id)
-#    if schema.owner != current_user:
-#        abort(403)
-#    
-#    datafiles = DataFile.query.filter_by(schema_id=schema_id).all()
-#    return jsonify([(str(datafile.id), datafile.filename) for datafile in datafiles])
-
-
-
-
-
-
-
-
-
-
+#
+#    return jsonify([(str(file.id), file.filename) for file in datafiles])
 
 
 
@@ -1323,7 +1083,7 @@ def get_schemas(username, database_id):
         abort(403)
     
     database = Database.query.get_or_404(database_id)
-    if database.owner != current_user:
+    if database.owner != current_user and database.id != 1:
         abort(403)
     
     schemas = Schema.query.filter_by(database_id=database_id).all()
@@ -1331,73 +1091,18 @@ def get_schemas(username, database_id):
 
 
 
-
-
-@databases.route("/<string:username>/schemas/<int:schema_id>/datafiles", methods=['GET'])
+@databases.route("/<string:username>/schemas/<int:schema_id>/tables", methods=['GET'])
 @login_required
-def get_datafiles(username, schema_id):
+def get_tables(username, schema_id):
     if username != current_user.username:
         abort(403)
     
     schema = Schema.query.get_or_404(schema_id)
-    if schema.owner != current_user:
+    if schema.owner != current_user and schema.database_id != 1:
         abort(403)
     
-    datafiles = DataFile.query.filter_by(schema_id=schema_id).all()
-    return jsonify([(str(datafile.id), datafile.filename) for datafile in datafiles])
-
-
-
-
-
-
-
-from powerpy.models import Worksheet
-from datetime import datetime, timezone
-
-
-# Route to save the worksheet content periodically
-@databases.route('/save-worksheet/<worksheet_code>', methods=['POST'])
-@login_required
-def save_worksheet():
-    data = request.get_json()
-    username = data.get('username')
-    content = data.get('content')
-    code = data.get('code')
-    if not username or not content:
-        return jsonify({'error': 'Username and content are required'}), 400
-
-    # Check if there's already a saved worksheet for the user
-    worksheet = Worksheet.query.filter_by(user_id=username).first()
-
-    if worksheet:
-        # Update existing worksheet content
-        worksheet.worksheet_content = content
-        worksheet.last_saved = datetime.now(timezone.utc)
-
-        db.session.add(worksheet)
-
-    # Commit the changes to the database
-    db.session.commit()
-
-    return jsonify({'message': 'Worksheet saved successfully'})
-
-
-
-
-
-
-
-
-
-
-
-    #database = Database.query.get_or_404(database_id)
-    #if database.owner != current_user:
-    #    abort(403)
-    #
-    #schemas = Schema.query.filter_by(database_id=database_id).all()
-    #return jsonify([(str(schema.id), schema.name) for schema in schemas])
+    tables = SchemaTable.query.filter_by(schema_id=schema_id).all()
+    return jsonify([(str(table.id), table.name) for table in tables])
 
 
 
@@ -1408,19 +1113,20 @@ def save_worksheet():
 @databases.route("/<string:username>/databases", methods=['GET', 'POST'])
 @login_required
 def view_databases(username):
-    user = User.query.filter_by(username=username).first_or_404()
+    route_logger.info('Accessed databases.view_databases')
 
-    if user != current_user:
-        abort(403)  # HTTP response for a forbidden route
-
+    if username != current_user.username: abort(403)
 
     total_databases = request.args.get('total_databases', 'error', type=int)
-    logging.info(f"total_databases_one:{total_databases}")
     databases = (Database.query
-        .filter_by(owner=user)
+        .filter_by(owner=current_user)
         .order_by(Database.date_created.desc())).all()
     
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+
+    #global_database = Database.query.get_or_404(1)
+    #databases.append(global_database)
+
 
     form = CreateDatabaseForm()
 
@@ -1469,7 +1175,7 @@ def view_databases(username):
         
     
     return render_template('databases.html', title='Databases',
-                           databases=databases, user=user, form=form, image_file=image_file)
+                           databases=databases, user=current_user, form=form, image_file=image_file)
 
 
 

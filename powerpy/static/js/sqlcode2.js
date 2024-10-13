@@ -110,24 +110,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const selectedDatabaseName = databaseMap.get(databaseSelector.value);
         const selectedSchemaName = schemaMap.get(schemaSelector.value);
+        const selectedDatabaseId = databaseSelector.value;
+        const selectedSchemaId = schemaSelector.value;
 
+        console.log(selectedDatabaseId)
+        console.log(selectedSchemaId)
         console.log('Sending query:', query);
+        console.log('selected database id', databaseSelector.option)
         console.log('Selected database:', selectedDatabaseName);
         console.log('Selected schema:', selectedSchemaName);
 
-        fetch(`/editor?selected_database=${encodeURIComponent(selectedDatabaseName)}&selected_schema=${encodeURIComponent(selectedSchemaName)}&query=${encodeURIComponent(query)}`)
-            .then(response => {
-                console.log('Response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
-                displayResults(data);  // Call your function to display results
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                sqlOutput.innerHTML = `<p>Error: ${error.message}</p>`;
-            });
+        fetch(`/editor?db_id=${selectedDatabaseId}&schema_id=${selectedSchemaId}&db_name=${encodeURIComponent(selectedDatabaseName)}&schema_name=${encodeURIComponent(selectedSchemaName)}&query=${encodeURIComponent(query)}`)
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('response:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Received data:', data);
+            if (data.data.type === 'message') {
+                displayMessage(data.data.contents);
+            } else if (data.data.type === 'table') {
+                displayResults(data.data.contents);
+            } else if (data.data.type === 'error') {
+                throw new Error(data.error);
+            } else {
+                throw new Error('Unknown response type');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            timer.stopAndReset();
+            sqlOutput.innerHTML = `<p>Caught js Error: ${error.message}</p>`;
+        });
     }
 
     // Function to highlight executed lines
@@ -149,7 +164,10 @@ document.addEventListener('DOMContentLoaded', function() {
     runQueryButton.addEventListener('click', runQuery);
 
 
-
+    function displayMessage(message) {
+        timer.stopAndReset();
+        sqlOutput.innerHTML = `<p class="query-error-message">${message}</p>`;
+    }
 
 
     function displayResults(data) {
@@ -157,13 +175,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const svgIcon = `
                 <i class="fas fa-exclamation-triangle" style="font-size:30px; color:#b58900; margin-bottom:15px;"></i>
             `;
-    
+            timer.stopAndReset();
             sqlOutput.innerHTML = `<div class="query-error-message">${svgIcon}<br> ${data.error}</div>`;
             return;
         }
     
     
-        allData = data.data;
+        allData = data.values;
         const totalHeight = allData.length * ROW_HEIGHT;
     
         let tableHtml = `
@@ -310,32 +328,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 
-    // Load databases
-    fetch(`/databases`)
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(db => {
-                const [id, name] = db;
-                databaseMap.set(id, name);
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = name;
-                databaseSelector.appendChild(option);
-            });
-            // Load schemas for the first database
-            if (databaseSelector.value) {
-                loadSchemas(databaseSelector.value);
-            }
-        });
+// Load databases
+fetch(`/databases`)
+    .then(response => response.json())
+    .then(data => {
+        // Add UPLOADS option
+    //    const uploadsOption = document.createElement('option');
+    //    uploadsOption.value = 'UPLOADS';
+    //    uploadsOption.textContent = 'UPLOADS';
+    //    databaseSelector.appendChild(uploadsOption);
 
-    // Load schemas when database selection changes
-    databaseSelector.addEventListener('change', function() {
-        loadSchemas(this.value);
+        data.forEach(db => {
+            const [id, name] = db;
+            databaseMap.set(id, name);
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = name;
+            databaseSelector.appendChild(option);
+        });
+        // Load schemas for the first database
+        if (databaseSelector.value) {
+            loadSchemas(databaseSelector.value);
+        }
     });
 
-    function loadSchemas(databaseId) {
-        schemaSelector.innerHTML = '';
-        schemaMap.clear();
+// Load schemas when database selection changes
+databaseSelector.addEventListener('change', function() {
+    loadSchemas(this.value);
+});
+
+function loadSchemas(databaseId) {
+    schemaSelector.innerHTML = '';
+    schemaMap.clear();
+
+    //if (databaseId === 'UPLOADS') {
+    //    const naOption = document.createElement('option');
+    //    naOption.value = 'N/A';
+    //    naOption.textContent = 'N/A';
+    //    schemaSelector.appendChild(naOption);
+    //} else {
         fetch(`/${username}/databases/${databaseId}/schemas`)
             .then(response => response.json())
             .then(data => {
@@ -349,10 +380,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
     }
+//}
 
 
 
 
+
+
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
 
 
     function saveWorksheet() {
@@ -367,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrf_token')
+                'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({ content: content })
         })
@@ -466,7 +503,7 @@ function queryTimer(){
         milliseconds = String(milliseconds).padStart(2, "0")
 
 
-        sqlOutput.innerHTML = `<div class="query-error-message">${minutes}:${milliseconds}</div>`;
+        sqlOutput.innerHTML = `<div class="query-error-message">${seconds}:${milliseconds}</div>`;
 
     }
 

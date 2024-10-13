@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='base.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -18,12 +19,13 @@
 -->
 </head>
 <body data-username="{{ current_user.username }}">
-    <div class="flash-messages-container">
-        <div class="flash-messages">
+    <div class="flash-messages-container" id="flash-messages-container">
+        <div class="flash-messages" id="flash-messages">
             {% with messages = get_flashed_messages(with_categories=True) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }}">
+                        <i class="fa-solid fa-circle-info"></i>
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -80,7 +82,6 @@
                     </div>
                     <div class="left-section-contents">
                         {% block leftcontents %}{% endblock %}
-
                 </section>
                 <div class="horizontal-resizer" id="horizontalResizer">
                     <div class="inner"></div>
@@ -124,6 +125,16 @@
                 }, 7000); // 10 seconds + 1 second for fade out
             });
         });
+
+
+
+        // Run this in your browser's console on your webpage
+let csrfToken = document.querySelector('meta[name="csrf-token"]');
+if (csrfToken) {
+    console.log("CSRF token found:", csrfToken.getAttribute('content'));
+} else {
+    console.error("CSRF token not found in meta tag");
+}
         </script>
 </body>
 </html>

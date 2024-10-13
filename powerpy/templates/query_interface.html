@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='query.css') }}" />
     <script src="{{ url_for('static', filename='js/sqlcode2.js') }}"></script>
 
@@ -187,7 +188,7 @@
             </div>
             <!-- footer -->
             <div class="footer">
-                <p style="margin:0px; padding:0px;">Compute Usage: {{ compute_usage }} minutes</p>
+                
                 <!-- Footer content will go here -->
             </div>
         </div>

@@ -3,10 +3,10 @@
     <h1>{{ folder.name }} ({{ child_folders|length }} child folders, {{ worksheets|length }} worksheets)</h1>
     <h1>parent_folder: {{ folder.parent_id }}</h1>
     {% if folder.parent_id %}
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('worksheets.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
     {% else %}
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_folder', username=current_user.username, folder_id=folder.id) }}">new folder</a>
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('worksheets.create_folder', username=current_user.username, folder_id=folder.id) }}">new folder</a>
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('worksheets.create_worksheet', username=current_user.username, folder_id=folder.id) }}">new worksheet</a>
     {% endif %}
     <!-- Display child folders -->
     <h2>Folders:</h2>
@@ -14,7 +14,7 @@
         <ul>
             {% for child in child_folders %}
                 <li>
-                    <a href="{{ url_for('users.view_folder', username=username, folder_id=child.id) }}">
+                    <a href="{{ url_for('worksheets.view_folder', username=username, folder_id=child.id) }}">
                         {{ child.name }}
                     </a>
                 </li>

@@ -70,6 +70,7 @@
             var databaseSelect = document.getElementById('database-select');
             var schemaSelect = document.getElementById('schema-select');
             var schemaGroup = document.getElementById('schema-group');
+            const username = document.body.dataset.username;
 
             databaseSelect.addEventListener('change', function() {
                 var databaseId = this.value;
@@ -78,7 +79,7 @@
                 schemaSelect.innerHTML = '<option value="">Select Schema</option>';
 
                 if (databaseId) {
-                    fetch(`/schemas/${databaseId}`)
+                    fetch(`/${username}/databases/${databaseId}/schemas`)
                         .then(response => response.json())
                         .then(schemas => {
                             schemas.forEach(([id, name]) => {

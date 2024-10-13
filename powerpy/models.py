@@ -12,43 +12,10 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-
-
 def random_image():
     # Define a list of possible image filenames
     images = ['default.jpg', 'default2.jpg', 'default3.jpg']
     return random.choice(images)
-
-
-
-#class User(db.Model, UserMixin):
-#    id = db.Column(db.Integer, primary_key=True)
-#    username = db.Column(db.String(20), unique=True, nullable=False)
-#    email = db.Column(db.String(120), unique=True, nullable=False)
-#    image_file = db.Column(db.String(20), nullable=False, default=random_image)
-#    password = db.Column(db.String(60), nullable=False)
-#    # Not an actual Column. Runs a query on the post table and grabs any posts from the users queried
-#    posts = db.relationship('Post', backref='author', lazy=True) # uppercase P for post as we're referencing the Post class. Backref essentially returns the user info for the relevant post 
-#
-#    def get_reset_token(self, expires_sec=1800):
-#        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
-#        return s.dumps({'user_id': self.id}).decode('utf-8')
-#    
-#    @staticmethod
-#    def verify_reset_token(token):
-#        s = Serializer(current_app.config['SECRET_KEY'])
-#        try:
-#            user_id = s.loads(token)['user_id']
-#        except:
-#            return None
-#        return User.query.get(user_id)
-#
-#
-#    def __repr__(self):
-#        return f"User('{self.username}', '{self.email}', '{self.image_file}')"
-#
-
-
 
 
 class User(db.Model, UserMixin):
@@ -58,18 +25,14 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default=random_image)
     password = db.Column(db.String(60), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
-    compute_usage = db.Column(db.Float, default=0.0)
-    # Not an actual Column. Runs a query on the post table and grabs any posts from the users queried
+    #compute_usage = db.Column(db.Float, nullable = True, default=0.0)
     posts = db.relationship('Post', backref='author', lazy=True)
     databases = db.relationship('Database', backref='owner', lazy=True) 
     dashboards = db.relationship('Dashboard', backref='owner', lazy=True) 
     schemas = db.relationship('Schema', backref='owner', lazy=True) 
-    tables = db.relationship('Table', backref='owner', lazy=True)
+    schema_tables = db.relationship('SchemaTable', backref='owner', lazy=True)
     worksheets = db.relationship('Worksheet', backref='owner', lazy=True)
     folders = db.relationship('Folder', backref='owner', lazy=True)
-
-
-
 
     def get_reset_token(self, expired_sec=1800):
         s = jwt.encode({"exp": datetime.now(tz=timezone.utc) + timedelta(
@@ -110,8 +73,6 @@ class User(db.Model, UserMixin):
 
 
 
-
-
 def worksheet_message(username, creation_time):
     return f"""-- Welcome, {username}!
 -- This worksheet was created on {creation_time.strftime('%Y-%m-%d %I:%M %p')}.
@@ -122,13 +83,6 @@ def worksheet_message(username, creation_time):
 
 -- Enjoy querying!
 """
-
-
-
-
-
-
-
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -164,11 +118,12 @@ class Schema(db.Model):
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-class Table(db.Model):
+class SchemaTable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     schema_id = db.Column(db.Integer, db.ForeignKey('schema.id'), nullable=False)
     database_id = db.Column(db.Integer, db.ForeignKey('database.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    table_columns = db.Column(db.Text, nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -180,7 +135,11 @@ class DataFile(db.Model):
     upload_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-
+class Upload(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
+    upload_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
 class Folder(db.Model):
@@ -189,45 +148,86 @@ class Folder(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('folder.id'), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    last_updated = db.Column(db.DateTime, nullable=True)
+    last_updated = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     # Self-referential relationship for nested folders
     children = db.relationship('Folder', backref=db.backref('parent', remote_side=[id]), lazy=True)
     worksheets = db.relationship('Worksheet', backref='folder', lazy=True)
-
-
-
-
-
-
-
-#class Worksheet(db.Model):
-#    id = db.Column(db.Integer, primary_key=True)
-#    code = db.Column(db.String(12), nullable=False)
-#    name = db.Column(db.String(100), nullable=True, default = datetime.now(timezone.utc).strftime('%Y-%m-%d %I:%M %p'))
-#    worksheet_content = db.Column(db.Text, nullable=False)
-#    date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-#    last_saved = db.Column(db.DateTime, nullable=True)
-#    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-
 
 class Worksheet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(16), nullable=False)
     name = db.Column(db.String(100), nullable=True, default= lambda: datetime.now(timezone.utc).strftime('%Y-%m-%d %I:%M %p'))
-    worksheet_content = db.Column(db.Text, nullable=False)
+    worksheet_content = db.Column(db.Text, nullable=True)
     date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    last_saved = db.Column(db.DateTime, nullable=True)
+    last_saved = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('folder.id'), nullable=True)  # Reference to the folder
-    
+
+class Query(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(16), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(16), nullable=False)
+    date_executed = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class SavedQuery(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(16), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(16), nullable=False)
+    date_executed = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
-### things to do still
-"""
+class Secrets(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    access_key = db.Column(db.String(60), nullable=False)
+    secret_key = db.Column(db.String(60), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(16), nullable=False)
+    date_executed = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-We just changed the datafile class's columns so we need to sort that out. 
-Need to sort out deleting files and schemas when you delete a database, or deleting files when you delete a schema.
-Need to make it so you cant upload files with duplicate file names, or, that you will get some kind of message with the options to overide or create a copy of the file.
+from sqlglot import Tokenizer
 
-"""
+# for local or very small teams
+# all data will always be stored locally in sqlite and then external data will need to be queried in a special way somehow
+
+#need a way to access data shared between different roles
+
+#data won't be partitioned by user_id, instead it's partitioned by roles.
+
+# 
+
+# an organization has accounts, and accounts have 
+
+
+
+
+
+
+# all permissions are role based. There will be one 'super role' which is ORGADMIN. this role automatically has access to do everything any anything.
+# orgadmin can create roles and define what these roles can do. by default 
+
+
+
+
+# create an account/organization (need specific code to do so), then that account is given access to all roles (including orgadmin). That account then has permission to create other accounts, roles, as well as users.
+
+# default roles are:
+    # ORGADMIN (can create accounts)
+    # ACCOUNTADMIN (can do anything in the account except create accounts)
+    # USERADMIN(specifically for creating roles/users and assigning their privliges)
+    # SYSADMIN (can create objects and specify privliges)
+#  SYSADMIN, ACCOUNTADMIN, 
+
+
+
+# data path: uploads -> org -> account -> role -> database
+
+
+
+
+
+
