@@ -211,8 +211,6 @@ def create_worksheet(username, folder_id):
 
 # finish cleaning shit up
 # make it so that you can flash messages without reloading the page
-# get started on the dashboard, it's the next big part of the project and it doesn't rely on having perfect forms etc, who gives a fuck if someone has duplicate names for things, thats their fault.
-
 
 
 
