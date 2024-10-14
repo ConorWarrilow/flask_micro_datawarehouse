@@ -44,8 +44,6 @@ The backend uses flask, with SQLAlchemy as the ORM and Sqlite to store user data
 - Everything is currently stored locally. For personal use or a small team this is okay, however it isn't scalable.
 
 
-
-
 ## Extra Images
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194646.jpg" alt="Description of image 1">
