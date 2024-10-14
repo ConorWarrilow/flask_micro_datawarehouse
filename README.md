@@ -3,6 +3,7 @@
 A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 
 
+## Main GUI
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194530.jpg" alt="Description of image 1">
 </div>
