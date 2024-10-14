@@ -8,9 +8,6 @@ A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 </div>
 
 
-
-
-
 ## How it works
 The project uses DuckDB as its core SQL engine, efficiently handling all database operations. User queries from the front end are received, parsed, analyzed, and executed based on specified logic, and .duckdb database files are used to store databases, schemas, and tables. Since DuckDB is optimization for its native file type, it provides rapid query execution for small to medium sized datasets without the need for a powerful server or other expensive data-warehousing solutions. Datasets of up to 50gb were tested and performed well on my local machine running 32gb ddr5 6000mhz + ryzen 5 7600X.
 
@@ -31,11 +28,11 @@ The backend uses flask, with SQLAlchemy as the ORM and Sqlite to store user data
 
 
 
-## To-Do
-- Finish adding support for querying and pulling in data contained in S3/Blob.
-- Add Account heirarchies (Organization, Account, User, Role)
+## Future Additions
+- Finish adding support for querying, pulling in, and sending data contained in S3/Blob, or other external sources such as Snowflake.
+- Add Account heirarchies (Organizations, Accounts, Users, Roles).
 - Extend SQLGlot library to allow for GRANT and REVOKE functionalities.
-- Add full RBAC functionalities, similar to snowflakes.
+- Add full RBAC functionalities, similar to snowflake's.
 
 
 
