@@ -26,17 +26,11 @@ from redis import Redis
 import duckdb
 import simplejson as sj
 import logging
+import pandas as pd
 
-redis = Redis(host='localhost', port=6379, db=0)
-
+# havent added caching yet, windows wasn't playing nice and I'll be moving to linux for the real project so I'll add it then.
+#redis = Redis(host='localhost', port=6379, db=0)
 databases = Blueprint('databases', __name__)
-
-
-
-
-
-
-
 
 
 
@@ -49,65 +43,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 route_logger = logging.getLogger('route_logger')
-
-
-#
-#
-#
-#@databases.route("/<string:username>/databases/create", methods=['GET', 'POST'])
-#@login_required
-#def create_database(username):
-#    route_logger.info("Accessed databases.create_database")
-#    if username != current_user.username: abort(403)
-#    form = CreateDatabaseForm()
-#
-#    current_app.logger.info("some flask log")
-#    if form.validate_on_submit():
-#        try:
-#            # Create and add the database to the session
-#            database = Database(
-#                database_name=form.database_name.data,
-#                database_description=form.database_description.data,
-#                owner=current_user
-#            )
-#            db.session.add(database)
-#            logging.info(f"Database object created: {database}")
-#            
-#            # Commit to get the database ID
-#            db.session.commit()
-#            logging.info(f"Database committed with ID: {database.id}")
-#
-#            # Create the schema now that we have the database ID
-#            schema = Schema(
-#                name=form.default_schema.data,
-#                description=form.schema_description.data,
-#                database_id=database.id,
-#                owner=current_user
-#            )
-#            db.session.add(schema)
-#            logging.info(f"Schema object created: {schema}")
-#
-#            # Commit the schema
-#            db.session.commit()
-#            logging.info("Schema committed successfully.")
-#            
-#            Flash.success('Database and default schema created successfully')
-#            return redirect(url_for('databases.view_databases', username=username))
-#        
-#        except Exception as e:
-#            logging.error(f"Error occurred during database creation: {e}")
-#            db.session.rollback()  # Roll back in case of any errors
-#            Flash.danger('An error occurred while creating the database. Please try again.')
-#
-#    # Log form errors if validation fails
-#    if form.errors:
-#        logging.warning(f"Form validation errors: {form.errors}")
-#
-#    return render_template('create_database.html', title='Create Database', form=form)
-#
-#
-#
-
 
 
 
@@ -193,86 +128,6 @@ def create_database():
 
 
 
-
-
-
-
-
-
-#
-#
-#
-#
-#@worksheets.route("/<username>/worksheets/<string:worksheet_code>/delete", methods=['POST'])
-#@login_required
-#def delete_worksheet(username, worksheet_code):
-#    route_logger.info(f"Accessed worksheets.delete_worksheet for user {username} and worksheet {worksheet_code}")
-#    current_app.logger.info("current app logger")
-#    if username != current_user.username:
-#        route_logger.warning(f"Unauthorized deletion attempt by {current_user.username} for {username}'s worksheet")
-#        return jsonify({"success": False, "message": "Unauthorized", "flash_message": "Unauthorized action.", "flash_category": "error"}), 403
-#    
-#    worksheet = Worksheet.query.filter_by(code=worksheet_code).first()
-#    if not worksheet:
-#        route_logger.warning(f"Worksheet {worksheet_code} not found for user {username}")
-#        return jsonify({"success": False, "message": "Worksheet not found", "flash_message": "Worksheet not found.", "flash_category": "error"}), 404
-#
-#    try:
-#        db.session.delete(worksheet)
-#        db.session.commit()
-#        route_logger.info(f"Worksheet {worksheet_code} deleted successfully for user {username}")
-#        return jsonify({
-#            "success": True, 
-#            "message": "Worksheet deleted successfully",
-#            "flash_message": "Successfully Deleted.",
-#            "flash_category": "success"
-#        }), 200
-#    except Exception as e:
-#        db.session.rollback()
-#        route_logger.error(f"Error deleting worksheet {worksheet_code} for user {username}: {str(e)}")
-#        return jsonify({
-#            "success": False, 
-#            "message": "Error deleting worksheet",
-#            "flash_message": "Error deleting worksheet.",
-#            "flash_category": "error"
-#        }), 500
-#
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @databases.route("/<string:username>/schemas/create", methods=['GET', 'POST'])
 @login_required
 def create_schema(username):
@@ -305,11 +160,6 @@ def create_schema(username):
             Flash.danger(f'An error occurred while creating the schema. {str(e)}')
 
     return render_template('create_schema.html', title='Create Schema', form=form)
-
-
-
-
-
 
 
 
@@ -671,98 +521,6 @@ def upload():
 
 
 
-import pandas as pd
-
-
-
-#@databases.route("/editor", methods=['GET'])
-#@login_required
-#def editor_query():
-#    route_logger.info("Accessed databases.editor_query")
-#    start_time = datetime.now()
-#    selected_database_name = request.args.get('selected_database', type=str)
-#    selected_schema_name = request.args.get('selected_schema', type=str)
-#    query = request.args.get('query', type=str)
-#    
-#    #current_app.logger.info(f"Received query: {query}")
-#    #current_app.logger.info(f"Selected database: {selected_database_name}")
-#    #current_app.logger.info(f"Selected schema: {selected_schema_name}")
-#    
-#
-#
-#    try:
-#        if selected_database_name != 'SAMPLE_DATA':
-#            print("what")
-#            # Find the database by name
-#            database = Database.query.filter_by(owner=current_user, database_name=selected_database_name).first()
-#            if not database:
-#                return jsonify({'error': 'Database not found', 'type': 'error'}), 404
-#
-#            # Find the schema by name
-#            schema = Schema.query.filter_by(database_id=database.id, name=selected_schema_name).first()
-#            if not schema:
-#                return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
-#
-#            gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database.database_name, default_schema=schema.name)
-#
-#        elif selected_database_name == 'SAMPLE_DATA':
-#            print("1")
-#            database = Database.query.get(1)
-#            schema = Schema.query.filter_by(database_id=1, name=selected_schema_name).first()
-#            if not schema:
-#                return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
-#            gigaduck = GigaDuck(database=':memory:', user_id=3, default_db=database.database_name, default_schema=schema.name)
-#            print("2")
-#
-#
-#
-#
-#
-#        result, status_code = gigaduck.query(query)
-#        print("3")
-#        if isinstance(result, Response):
-#            # If it's a Response object, it's likely a success message
-#            response_data = result.get_json()
-#            if 'success' in response_data:
-#                return jsonify({'message': response_data['success'], 'type': 'success'}), status_code
-#            elif 'warning' in response_data:
-#                return jsonify({'message': response_data['warning'], 'type': 'warning'}), status_code
-#            elif 'fail' in response_data:
-#                return jsonify({'message': response_data['fail'], 'type': 'fail'}), status_code
-#            
-#        elif isinstance(result, pd.DataFrame):
-#            for column in result.select_dtypes(include=['datetime64']):
-#                result[column] = result[column].astype(str)  # Convert to ISO 8601 string
-#            response_data = {
-#                'type': 'table',
-#                'columns': result.columns.tolist(),
-#                'data': result.values.tolist()
-#            }
-#            return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
-#        else:
-#            return jsonify({'error': 'Unexpected result type', 'type': 'error'}), 400
-#
-#    except Exception as e:
-#        error_message = str(e)
-#
-#            # Check if the error message contains the specific pattern
-#        if 'match the pattern' in error_message:
-#            #current_app.logger.error(f"Error executing query (real error): {error_message}")
-#            # Extract table name from the error message using regex
-#            # This regex captures the word just before '.parquet' after the last '/'
-#            match = re.search(r'/([^/]+)\.parquet"', error_message)
-#            if match:
-#                table = match.group(1)  # Extracted table name
-#            else:
-#                table = "unknown table"  # Default if table name couldn't be extracted
-#            return jsonify({'error': f"Unable to find '{table}' table in the specified location."}), 400
-#        elif str("'NoneType' object has no attribute") in error_message:
-#            return jsonify({'error': "Empty Query"}), 400
-#        else:
-#            #current_app.logger.error(f"Error executing query: {error_message}")
-#            return jsonify({'error': error_message}), 400
-
-
 
 
 
@@ -858,196 +616,6 @@ def editor_query():
 
 
 
-        #return {
-        #    "status": {
-        #        "code": 200,
-        #        "message": "instant fail",
-        #        "type": "unsuccessful"
-        #    },
-        #    "data": {
-        #        "type": "message",
-        #        "contents": "Woops, something went wrong... Try refreshing and then retry!"
-        #    }
-        #}
-
-    #id = db.Column(db.Integer, primary_key=True)
-    #code = db.Column(db.String(16), nullable=False)
-    #content = db.Column(db.Text, nullable=False)
-    #date_created = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    #owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    # message + type
-
-    # type + columns + data
-
-    # status (code/type/message) + data(type/contents)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #result = transform_query(query, user_id= current_user.id, default_db='yoyo', default_schema='yeet')
-#
-    #if result['output_type'] == "query":
-#
-#
-    #    print(f" query to execute: {result['query']}")
-    #    print(f" all the databases: {result['all_databases']}")
-    #    extra_databases = [database for database in result['all_databases'] if database != selected_database_name]
-    #    print(f"extra dbs: {extra_databases}")
-    #    try:
-    #        conn = duckdb.connect(f"uploads/{current_user.id}/yoyo.db") ###### jsut putting yoyo2 for now since we haven't properly created any databases yet
-    #        for database in extra_databases:
-    #            print(f"attaching database: {database}")
-    #            conn.execute(f"ATTACH 'uploads/{current_user.id}/{str(database)}.db' AS {str(database)}")
-    #        query_result = conn.execute(result['query']).fetchdf()
-    #        conn.close()
-    #    except Exception as e:
-    #        print(e)
-    #        conn.close()
-    #    print(result)
-    #    del conn
-    #    if isinstance(result, pd.DataFrame):
-    #        
-    #        for column in result.select_dtypes(include=['datetime64']):
-    #            result[column] = result[column].astype(str)  # Convert to ISO 8601 string
-    #        response_data = {
-    #            'type': 'table',
-    #            'columns': result.columns.tolist(),
-    #            'data': result.values.tolist()
-    #        }
-    #        return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
-    #    else: 
-    #        return jsonify({'message': result['query'], 'type': 'success'}), 200
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-    #try:
-    #    if selected_database_name != 'SAMPLE_DATA':
-#
-    #        # Find the database by name
-    #        database = Database.query.filter_by(owner=current_user, database_name=selected_database_name).first()
-    #        if not database:
-    #            return jsonify({'error': 'Database not found', 'type': 'error'}), 404
-#
-    #        # Find the schema by name
-    #        schema = Schema.query.filter_by(database_id=database.id, name=selected_schema_name).first()
-    #        if not schema:
-    #            return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
-#
-    #        gigaduck = GigaDuck(database=':memory:', user_id=current_user.id, default_db=database.database_name, default_schema=schema.name)
-#
-    #    elif selected_database_name == 'SAMPLE_DATA':
-    #        print("1")
-    #        database = Database.query.get(1)
-    #        schema = Schema.query.filter_by(database_id=1, name=selected_schema_name).first()
-    #        if not schema:
-    #            return jsonify({'error': 'Schema not found', 'type': 'error'}), 404
-    #        gigaduck = GigaDuck(database=':memory:', user_id=3, default_db=database.database_name, default_schema=schema.name)
-    #        print("2")
-#
-#
-#
-#
-#
-    #    result, status_code = gigaduck.query(query)
-    #    print("3")
-    #    if isinstance(result, Response):
-    #        # If it's a Response object, it's likely a success message
-    #        response_data = result.get_json()
-    #        if 'success' in response_data:
-    #            return jsonify({'message': response_data['success'], 'type': 'success'}), status_code
-    #        elif 'warning' in response_data:
-    #            return jsonify({'message': response_data['warning'], 'type': 'warning'}), status_code
-    #        elif 'fail' in response_data:
-    #            return jsonify({'message': response_data['fail'], 'type': 'fail'}), status_code
-    #        
-    #    elif isinstance(result, pd.DataFrame):
-    #        for column in result.select_dtypes(include=['datetime64']):
-    #            result[column] = result[column].astype(str)  # Convert to ISO 8601 string
-    #        response_data = {
-    #            'type': 'table',
-    #            'columns': result.columns.tolist(),
-    #            'data': result.values.tolist()
-    #        }
-    #        return Response(sj.dumps(response_data, ignore_nan=True), mimetype='application/json')
-    #    else:
-    #        return jsonify({'error': 'Unexpected result type', 'type': 'error'}), 400
-#
-    #except Exception as e:
-    #    error_message = str(e)
-#
-    #        # Check if the error message contains the specific pattern
-    #    if 'match the pattern' in error_message:
-    #        #current_app.logger.error(f"Error executing query (real error): {error_message}")
-    #        # Extract table name from the error message using regex
-    #        # This regex captures the word just before '.parquet' after the last '/'
-    #        match = re.search(r'/([^/]+)\.parquet"', error_message)
-    #        if match:
-    #            table = match.group(1)  # Extracted table name
-    #        else:
-    #            table = "unknown table"  # Default if table name couldn't be extracted
-    #        return jsonify({'error': f"Unable to find '{table}' table in the specified location."}), 400
-    #    elif str("'NoneType' object has no attribute") in error_message:
-    #        return jsonify({'error': "Empty Query"}), 400
-    #    else:
-    #        #current_app.logger.error(f"Error executing query: {error_message}")
-    #        return jsonify({'error': error_message}), 400
-
-
-
-
-
-
-
-
-
-
-
-
-
 @databases.route("/databases", methods=['GET'])
 @login_required
 def get_databases():
@@ -1056,22 +624,6 @@ def get_databases():
     databases.append(global_database)
 
     return jsonify([(str(db.id), db.database_name) for db in databases])
-
-
-
-#@databases.route("/<username>/datafiles", methods=['GET'])
-#@login_required
-#def get_datafiles(username):
-#    datafiles = Upload.query.filter_by(owner_id=current_user.id).all()
-#
-#    print(datafiles)
-#    for file in datafiles:
-#        print(file.filename)
-#        print(file.id)
-#
-#
-#
-#    return jsonify([(str(file.id), file.filename) for file in datafiles])
 
 
 
