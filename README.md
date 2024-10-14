@@ -15,7 +15,7 @@ The main GUI was designed to mimic Snowflake, as snowflake was the original insp
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194646.jpg" alt="Description of image 1">
 </div>
 
-Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom, stretching the entire width of the interface, allowing 
+Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom and stretches the entire width of the interface, which wastes far less space and allows you to visualize more columns without collapsing the menu.
 
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20190707.jpg" alt="Description of image 1">
