@@ -24,11 +24,10 @@ A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20191210.jpg" alt="Description of image 1">
 </div>
 
-
-
-MicroDataWarehouse leverages DuckDB as its core SQL engine, handling all database operations with exceptional efficiency. User queries from the front end are received, parsed, analyzed, and executed based on specified logic. The system utilizes .duckdb database files to store databases, schemas, and tables, offering superior data compression compared to CSV and even parquet formats. This storage method, coupled with DuckDB's optimization for its native file type, ensures rapid query execution and efficient data management.
-The front end is crafted using vanilla JavaScript, CSS, and HTML, with Bootstrap components enhancing the user interface. CodeMirror is integrated to provide a powerful query editing experience, while custom JavaScript enables users to write and execute multiple queries independently within a single worksheet. These worksheets are saved to the backend, where an ingeniously designed adjacency list model creates a hierarchical file system for organized worksheet management. The system also exposes the structure of databases, schemas, and tables to the front end, providing users with a comprehensive view of their data landscape.
-Security and user management are prioritized, with robust user authentication, data encryption, and email verification processes implemented for account creation and password resets. This comprehensive approach ensures a secure, efficient, and user-friendly environment for data warehousing and analysis.
+## How it works
+The project uses DuckDB as its core SQL engine, efficiently handling all database operations. User queries from the front end are received, parsed, analyzed, and executed based on specified logic, and .duckdb database files are used to store databases, schemas, and tables. Since DuckDB is optimization for its native file type, it provides rapid query execution for small to medium sized datasets without the need for a powerful server or other expensive datawarehousing solutions.
+The front end uses vanilla JS, CSS, and HTML. CodeMirror is used for the query editor, with custom JavaScript allowing users to write and execute multiple queries independently within each worksheet. These worksheets are automatically saved to the backend periorically or upon page refresh/exit. An adjacency list model is used to create a hierarchical file system for organized worksheet management. Users can also visualize their databases, schemas and tables on the front end, making it easy to work with .duckdb files.
+User authentication, data encryption, and email verification processes for account creation and password resets are also implemented.
   
 
 
