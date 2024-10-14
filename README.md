@@ -3,40 +3,8 @@
 A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 
 
-## Main GUI
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194530.jpg" alt="Description of image 1">
-</div>
-
-The main GUI was designed to mimic Snowflake, as snowflake was the original inspiration for the project.
-<br/>
-<br/>
-
-
-
-<div style="display: flex; justify-content: center; gap: 10px;">
-  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194646.jpg" alt="Description of image 1">
-</div>
-
-Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom and stretches the entire width of the interface, wastes far less space and allowing you to visualize more columns without collapsing the menu. 
-<br/>
-<br/>
-
-
-
-<div style="display: flex; justify-content: center; gap: 10px;">
-  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20190707.jpg" alt="Description of image 1">
-</div>
-
-The project also features a page for viewing your databases, with information such as the date created and any comments (if given). Functionality for filtering and sorting (whether by name or date) is also included.
-<br/>
-<br/>
-
-
-
-
-<div style="display: flex; justify-content: center; gap: 10px;">
-  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20191210.jpg" alt="Description of image 1">
 </div>
 
 
