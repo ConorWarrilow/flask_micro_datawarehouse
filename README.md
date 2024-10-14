@@ -4,12 +4,11 @@ A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 
 
 <div style="display: flex; justify-content: center; gap: 10px;">
-  <img width="300" src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194530.jpg" alt="Description of image 1">
-  <img width="300" src="https://github.com/ConorWarrilow/Conv-Net-Defect-Detection/assets/152389538/d630dbc1-9cf0-4231-a356-0705d884c6a3" alt="Description of image 2">
-  <img width="300" src="https://github.com/ConorWarrilow/Conv-Net-Defect-Detection/assets/152389538/d630dbc1-9cf0-4231-a356-0705d884c6a3" alt="Description of image 3">
+  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194530.jpg" alt="Description of image 1">
 </div>
 <br/>
-
+  <img width="300" src="https://github.com/ConorWarrilow/Conv-Net-Defect-Detection/assets/152389538/d630dbc1-9cf0-4231-a356-0705d884c6a3" alt="Description of image 2">
+  <img width="300" src="https://github.com/ConorWarrilow/Conv-Net-Defect-Detection/assets/152389538/d630dbc1-9cf0-4231-a356-0705d884c6a3" alt="Description of image 3">
 
 ## Features
 - **Flask Web Server**: Provides a robust and flexible web interface.
