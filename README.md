@@ -80,4 +80,23 @@ User authentication, data encryption, and email verification processes for accou
 
 
 
+## Extra Images
+<div style="display: flex; justify-content: center; gap: 10px;">
+  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194646.jpg" alt="Description of image 1">
+</div>
 
+Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom and stretches the entire width of the interface, wasting far less space and allowing you to visualize more columns without collapsing the menu. 
+<br/>
+<br/>
+
+
+
+<div style="display: flex; justify-content: center; gap: 10px;">
+  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20190707.jpg" alt="Description of image 1">
+</div>
+
+
+<div style="display: flex; justify-content: center; gap: 10px;">
+  <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20191210.jpg" alt="Description of image 1">
+</div>
+The project also features pages for viewing your databases/worksheets, with information such as the date created and any comments (if given). Functionality for filtering and sorting (whether by name or date) is also included.
