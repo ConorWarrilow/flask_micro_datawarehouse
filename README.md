@@ -9,22 +9,39 @@ A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 </div>
 
 The main GUI was designed to mimic Snowflake, as snowflake was the original inspiration for the project.
+<br/>
+<br/>
+
 
 
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20194646.jpg" alt="Description of image 1">
 </div>
 
-Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom and stretches the entire width of the interface, which wastes far less space and allows you to visualize more columns without collapsing the menu.
+Both the table container and database/worksheets menu are resizeable. Unlike snowflake, the table container was placed at the bottom and stretches the entire width of the interface, wastes far less space and allowing you to visualize more columns without collapsing the menu. 
+<br/>
+<br/>
+
+
 
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20190707.jpg" alt="Description of image 1">
 </div>
 
+The project also features a page for viewing your databases, with information such as the date created and any comments (if given). Functionality for filtering and sorting (whether by name or date) is also included.
+<br/>
+<br/>
+
+
+
 
 <div style="display: flex; justify-content: center; gap: 10px;">
   <img src="https://github.com/ConorWarrilow/flask_micro_datawarehouse/blob/main/assets/Screenshot%202024-10-04%20191210.jpg" alt="Description of image 1">
 </div>
+
+
+
+
 
 ## How it works
 The project uses DuckDB as its core SQL engine, efficiently handling all database operations. User queries from the front end are received, parsed, analyzed, and executed based on specified logic, and .duckdb database files are used to store databases, schemas, and tables. Since DuckDB is optimization for its native file type, it provides rapid query execution for small to medium sized datasets without the need for a powerful server or other expensive data-warehousing solutions. Datasets of up to 50gb were tested and performed well on my local machine running on 32gb ddr5 6000mhz + ryzen 5 7600X.
