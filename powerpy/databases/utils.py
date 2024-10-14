@@ -1,3 +1,11 @@
+""" This is more or less the brain of the backend. It enables us to extract all necessary information from a user's query, 
+such as the databases, schemas, and tables specified. We can also extract the type of query (SELECT, CREATE, ALTER etc), 
+allowing us to implement RBAC permissions later. It's still a work in progress and isn't finished 
+(USE, DELETE and transactions still havent even been implemented). A lot of changes were made from when I began, 
+and so there's quite a few inconsistencies in how things are done, and a lot of repetitive code, but I'll be fixing them in the real project."""
+
+
+
 import secrets
 import os
 from PIL import Image
@@ -21,7 +29,6 @@ import logging
 from sqlglot.errors import ParseError
 import duckdb
 from typing import Union, List, Dict, Any
-
 import logging
 
 logging.basicConfig(
@@ -31,11 +38,10 @@ logging.basicConfig(
 )
 
 
-        #output_type - message (successful, warning, unsuccessful, denial), table, plot
-        #output - the actual output for the selected category
-        #operation (select, create, drop etc)
-        #objects (list of included databases, schemas, tables etc involved in a query)
-
+#output_type - message (successful, warning, unsuccessful, denial), table, plot
+#output - the actual output for the selected category
+#operation (select, create, drop etc)
+#objects (list of included databases, schemas, tables etc involved in a query)
 # fix error message when trying to query a table which doesn't exist e.g. select * from db.schema.table;
 
 
@@ -56,15 +62,16 @@ class SqlQueryBase(ABC):
     def execute_query(self):
         pass
 
-
-    def _get_all_tables(self):
-        
+    def _extract_all_tables():
+        """ Yet to be implemented """
         pass
+
 
     def _database_file_path(self, database_name):
         return f"uploads/{self.user_id}/{database_name}.db"
 
     def _query_result_formatter(self, status_code: int = 200, status_message: str = "successful request", status_type: str = "success", data_type: str = 'message', data_contents: Union[Dict[str, List[Any]], str] = 'no contents') -> Dict[str, Any]:
+        """ Formats query results into json to be sent to the front end. Default values assume a successful request """
         output = {
             "status": {
                 "code": status_code,
@@ -79,6 +86,7 @@ class SqlQueryBase(ABC):
         return output
     
     def _table_results(self, table):
+        """ Returns Table results formatted as json using the _query_result_formatter() function """
         for column in table.select_dtypes(include=['datetime64']):
             table[column] = table[column].astype(str)
         return self._query_result_formatter(
@@ -102,9 +110,15 @@ class SqlQueryBase(ABC):
         )
     
     def _update_sqlite_databases(self, database=None, schema=None, table=None):
+        """ yet to be implemented """
         pass
 
     def _extract_db_schema_table(self):
+        """ Extracts the names of the database (if exists), schema (if exists) and table from any query containing a table. 
+        This can range from a simple select query, CTAS, Update queries, Alter queries etc. 
+        If a database is specified we'll need to connect to it, which is why we extract it. 
+        Currently, extracting the schema serves no purpose, however it'll be important in the future when RBAC permissions are involved."""
+
         db_schema_table = self.parsed_query.find(sqlglot.exp.Table)
         table_name = str(db_schema_table.name)
         table_schema = str(db_schema_table.args.get("db")) if isinstance(db_schema_table.args.get("db"), Identifier) else self.default_schema.name
@@ -112,6 +126,7 @@ class SqlQueryBase(ABC):
         return table_database, table_schema, table_name
 
     def _extract_extra_databases(self):
+        """ Extracts all databases specified in a query which aren't the default database. """
         all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
         all_tables = {table for table in self.parsed_query.find_all(sqlglot.exp.Table)}
 
@@ -128,28 +143,14 @@ class SqlQueryBase(ABC):
         return extra_databases
 
 
-    #def _extract_dbs_schemas_tables(self):
-    #    all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
-    #    all_tables = {table for table in self.parsed_query.find_all(sqlglot.exp.Table)}
-    #    relationships = []
-    #    for table in all_tables:
-    #        table_name = table.name
-    #        if table_name not in all_ctes: 
-    #            schema = str(table.args.get("db")) if isinstance(table.args.get("db"), Identifier) else None
-    #            database = str(table.args.get("catalog")) if isinstance(table.args.get("catalog"), Identifier) else None
-    #            if database:
-    #                self.all_databases.add(str(database))
-    #                relationships.append({database, schema, table})
-    #    extra_databases = [database for database in self.all_databases if database != self.default_db.database_name]
-    #    logging.info(f"Extra Databases: {extra_databases}")
-    #    return extra_databases
-
 
 
     def _duckdb_execution(self, output_type: str, extra_databases: set = None, output_message: str = None):
-        """Executes the query and returns various outputs based on the input
-        output_type is a message or a table. if it's a messsage you need to supply the query action being performed (created, updated, deleted, dropped etc), and the object being acted on (table, database, schema)
-        some queries will involve databases other than the default selected database on the interface, which need to be supplied if they exist."""
+        """Executes the query and returns various outputs based on the inputoutput_type is a message or a table. 
+        if it's a messsage you need to supply the query action being performed (created, updated, deleted, dropped etc), and the 
+        object being acted on (table, database, schema) some queries will involve databases other than 
+        the default selected database on the interface, which need to be supplied if they exist."""
+        
         try:
             with duckdb.connect(f"uploads/{self.user_id}/{self.default_db.database_name}.db") as conn:
                 conn.execute(f"""use {self.default_db.database_name}.{self.default_schema.name}""")
@@ -195,29 +196,10 @@ class SqlQueryBase(ABC):
 
 
 
-
-
-
-
-
-
-
-
-
-
 class SelectQuery(SqlQueryBase):
     def execute_query(self):
         select_table_database, select_table_schema, select_table_name = self._extract_db_schema_table()
         extra_databases = self._extract_extra_databases()
-        #all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
-        #all_tables = {table for table in self.parsed_query.find_all(sqlglot.exp.Table)}
-        #for table in all_tables:
-        #    table_name = table.name
-        #    if table_name not in all_ctes: 
-        #        database = table.args.get("catalog", None)
-        #        if database:
-        #            self.all_databases.add(str(database))
-        #extra_databases = [database for database in self.all_databases if database != self.default_db.database_name]
         return self._duckdb_table_execution(extra_databases = extra_databases)
 
 class InsertQuery(SqlQueryBase):
@@ -225,15 +207,6 @@ class InsertQuery(SqlQueryBase):
         insert_table_database, insert_table_schema, insert_table_name = self._extract_db_schema_table()
         self.all_databases.add(insert_table_database)
         extra_databases = self._extract_extra_databases()
-        #all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
-        #all_tables = {table for table in self.parsed_query.find_all(sqlglot.exp.Table)}
-        #for table in all_tables:
-        #    table_name = table.name
-        #    if table_name not in all_ctes: 
-        #        database = table.args.get("catalog", None)
-        #        if database:
-        #            self.all_databases.add(str(database))
-        #extra_databases = [database for database in self.all_databases if database != self.default_db.database_name]
         return self._duckdb_execution(output_type = 'message', extra_databases = extra_databases, output_message= f"Insert successful for table {insert_table_name}")
 
 class UpdateQuery(SqlQueryBase):
@@ -242,15 +215,6 @@ class UpdateQuery(SqlQueryBase):
         self.all_databases.add(update_table_database)
         if self.parsed_query.args.get('expressions'):
             extra_databases = self._extract_extra_databases()
-        #    all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
-        #    all_tables = self.parsed_query.find_all(sqlglot.exp.Table)
-        #    for table in all_tables:
-        #        table_name = table.name
-        #        if table_name not in all_ctes:
-        #            database = table.args.get("catalog", None)
-        #            if database:
-        #                self.all_databases.add(str(database))
-        #extra_databases = [database for database in self.all_databases if database != self.default_db.database_name]
         return self._duckdb_execution(output_type = 'message', extra_databases = extra_databases, output_message= f"Update successful for table {update_table_name}")
 
 class DeleteQuery(SqlQueryBase):
@@ -267,12 +231,6 @@ class AlterQuery(SqlQueryBase):
         try:
             with duckdb.connect(f"uploads/{self.user_id}/{alter_table_database}.db") as conn:
                 conn.execute(f"""use {self.default_db.database_name}.{self.default_schema.name}""")
-
-                # connect to schema
-
-
-
-
                 conn.execute(str(self.parsed_query))
                 conn.close()
         except Exception as e:
@@ -430,14 +388,6 @@ class CreateQuery(SqlQueryBase):
         self.all_databases.add(create_table_database)
         if self.parsed_query.args.get('expression'):
             extra_databases = self._extract_extra_databases()
-        #    all_ctes = {cte.alias_or_name for cte in self.parsed_query.find_all(sqlglot.exp.CTE)}
-        #    all_tables = self.parsed_query.find_all(sqlglot.exp.Table)
-        #    for table in all_tables:
-        #        table_name = table.name
-        #        if table_name not in all_ctes:
-        #            database = table.args.get("catalog", None)
-        #            if database:
-        #                self.all_databases.add(str(database))
         else:
             extra_databases = [database for database in self.all_databases if database != self.default_db.database_name]
         return self._duckdb_table_creation(extra_databases, create_table_database, create_table_schema, create_table_name, has_replace = self.parsed_query.args.get('replace'), has_exists = self.parsed_query.args.get('exists'))
@@ -522,6 +472,7 @@ query_classes = {
     Transaction: TransactionQuery
 }
 
+
 def get_query_object(query, user_id, default_db, default_schema):
     try:
         parsed_query = parse_one(query, read="duckdb")
@@ -539,7 +490,10 @@ def get_query_object(query, user_id, default_db, default_schema):
     else:
         return {"output_type": "warning", "output": f"Unsupported Query syntax."}
 
+
+
 def get_global_db_query_object(query, user_id, default_db, default_schema):
+    """ Currently not in use. """
     try:
         parsed_query = parse_one(query, read="duckdb")
     except ParseError as e:
