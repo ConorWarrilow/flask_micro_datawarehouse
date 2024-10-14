@@ -13,7 +13,7 @@ def load_user(user_id):
 
 
 def random_image():
-    # Define a list of possible image filenames
+    """Defines a list of default image files to be used when a user creates an account"""
     images = ['default.jpg', 'default2.jpg', 'default3.jpg']
     return random.choice(images)
 
