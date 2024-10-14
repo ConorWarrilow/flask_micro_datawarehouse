@@ -19,6 +19,7 @@ from powerpy import db
 import json
 from datetime import datetime, timezone
 import sqlglot
+from sqlglot.errors import ParseError
 from sqlglot.expressions import Create, Table, Identifier, Drop, Delete, Use, Select, CTE, Subquery, Insert, Update, Alter, Command, Transaction, RenameTable
 from sqlglot import exp
 import duckdb
@@ -459,7 +460,7 @@ class CreateQuery(SqlQueryBase):
         db.session.commit()
         return self._message_results(message = f"database '{str(database)}' successfully created.", status_type='success')
 
-from sqlglot.errors import ParseError
+
 query_classes = {
     Select: SelectQuery,
     Insert: InsertQuery,
@@ -474,6 +475,8 @@ query_classes = {
 
 
 def get_query_object(query, user_id, default_db, default_schema):
+    """ Uses SQLGlot to parse the query and determine the type of query passed. If a valid query is passed, the query class dictionary will
+    be called, and if a valid key is found, the respective child class of SqlQueryBase will be created."""
     try:
         parsed_query = parse_one(query, read="duckdb")
     except ParseError as e:
