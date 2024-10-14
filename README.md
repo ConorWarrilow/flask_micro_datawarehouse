@@ -1,4 +1,4 @@
-# MicroDataWarehouse
+# Flask Micro Data Warehouse
 
 A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 
