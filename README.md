@@ -17,7 +17,7 @@ The project uses DuckDB as its core SQL engine, efficiently handling all databas
 The front end uses vanilla JS, CSS, and HTML. CodeMirror is used for the query editor, with JavaScript allowing users to write and execute multiple queries independently within each worksheet. These worksheets are automatically saved to the backend periorically or upon page refresh/exit. An adjacency list model is used to create a hierarchical file system for the organization of worksheets. Users can also visualize their databases, schemas and tables on the front end, making it easy to work with .duckdb files. 
 User authentication, data encryption, and email verification processes for account creation and password resets are also implemented.
   
-
+The backend uses flask, with SQLAlchemy as the ORM and Sqlite to store user data. Whenever a user manipulates an existing database (whether it be creating/deleting a schema, or creating/altering/updating a table etc), their actions are tracked and stored within the SQLite database. In addition, each query is stored with a status as to whether the query was successful or unsuccessful. 
 
 ## Notable Features
 - **Full DuckDB Query Functionality**: Utilizes DuckDB on the backend and supports full sql functionality (with transactions to be added in the future)
@@ -26,7 +26,8 @@ User authentication, data encryption, and email verification processes for accou
 - **Email Authentication**: Verify user identities through email.
 - **Sensitive Data Encryption**: Ensures data security at rest.
 - **adjacency list File System**: Heirarchical file system including directories and SQL worksheets using an adjacency list model. 
-- **Hierarchical Database Organization**: Data is organized by Database > Schema > Table structure.
+- **Hierarchical Database Organization**: User databases can be visualized on the front end in a heierarchical Database > Schema > Table structure.
+- **Historic Query Analytics**: All queries are saved and can be viewed later on. Users can also see which queries were executed successfully or unsuccessfully. 
 
 
 
