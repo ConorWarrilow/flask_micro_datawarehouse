@@ -62,9 +62,20 @@ User authentication, data encryption, and email verification processes for accou
 
 
 
+## To-Do
+- Finish adding support for querying and pulling in data contained in S3/Blob.
+- Add Account heirarchies (Organization, Account, User, Role)
+- Extend SQLGlot library to allow for GRANT and REVOKE functionalities.
+- Add full RBAC functionalities, similar to snowflakes.
+
+
+
 ## Limitations
+- Duckdb is limited regarding concurrency. Conflicts would occur should multiple users/processes perform operations on a database at the same time.
+- Duckdb is running as a single node, which is limited in scalability, and will never compete with distributed compute when it comes to large workloads.
 - Does not support transactional queries at the moment
 - Yet to implement RBAC controls (currently my main focus)
+- Everything is currently stored locally. For personal use or a small team this is okay, however it isn't scalable.
 
 
 
