@@ -7,8 +7,6 @@ A lightweight, secure microdata warehouse solution built with DuckDB and Flask.
 
 
 ## Features
-
-- **DuckDB Backend**: Utilizes DuckDB for efficient data storage and querying.
 - **Flask Web Server**: Provides a robust and flexible web interface.
 - **User Authentication**: Secure login system to manage access.
 - **Email Authentication**: Verify user identities through email.
